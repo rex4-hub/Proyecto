@@ -162,7 +162,6 @@ pagina = st.sidebar.radio(
     "Selecciona una página:",
     [
         "📊 Dashboard Principal",
-        "🏠 Inicio",
         "📈 Exploración de Datos",
         "📉 Análisis Exploratorio",
         "🤖 Modelo Predictivo",
@@ -680,55 +679,6 @@ if pagina == "📊 Dashboard Principal":
 # ============================================================================
 # PÁGINA: INICIO
 # ============================================================================
-
-elif pagina == "🏠 Inicio":
-    st.markdown('<h1 class="main-header">📊 Análisis y Predicción de Presupuesto Público</h1>', 
-                unsafe_allow_html=True)
-    
-    st.markdown("""
-    ### Bienvenido a la aplicación de análisis presupuestario
-    
-    Esta aplicación permite **explorar, analizar y predecir** el presupuesto de organismos públicos argentinos
-    usando técnicas de ciencia de datos y machine learning.
-    """)
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("📊 Registros", f"{len(df_raw):,}")
-    with col2:
-        st.metric("🏛️ Organismos", df_raw['Organismo'].nunique())
-    with col3:
-        st.metric("📅 Años", f"{df_raw['Periodo'].max() - df_raw['Periodo'].min() + 1}")
-    with col4:
-        st.metric("🎯 R² Modelo", f"{metrics['test']['r2']:.3f}")
-    
-    st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### 🎯 Funcionalidades")
-        st.markdown("""
-        ✅ **Exploración de Datos**: Visualiza estadísticas y distribuciones  
-        ✅ **Análisis Exploratorio**: Gráficos interactivos con Altair  
-        ✅ **Modelo Predictivo**: Random Forest entrenado (R²=0.95)  
-        ✅ **Predicciones Interactivas**: Predice presupuestos nuevos  
-        ✅ **Documentación**: Metodología y hallazgos clave  
-        """)
-    
-    with col2:
-        st.markdown("### 📈 Hallazgos Principales")
-        st.markdown("""
-        🔹 **Crecimiento exponencial** desde 2023  
-        🔹 **Plan 34 (Salarios)** concentra ~60% del presupuesto  
-        🔹 **R² = 0.95**: Excelente capacidad predictiva  
-        🔹 **Variables lag**: Los mejores predictores (48%)  
-        🔹 **Sin overfitting**: Gap < 0.05  
-        """)
-    
-    st.markdown("---")
-    st.info("👈 **Usa el menú lateral** para navegar entre las diferentes secciones")
 
 # ============================================================================
 # PÁGINA: EXPLORACIÓN DE DATOS
