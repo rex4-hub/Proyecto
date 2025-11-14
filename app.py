@@ -640,7 +640,6 @@ with st.expander("📋 3. Desglose por Plan de Cuenta"):
 # ============================================================================
 # PÁGINA: EXPLORACIÓN DE DATOS
 # ============================================================================
-
 elif pagina == "📈 Exploración de Datos":
     st.markdown('<h1 class="main-header">📈 Exploración de Datos</h1>', unsafe_allow_html=True)
     
