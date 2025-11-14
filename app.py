@@ -1,6 +1,6 @@
 """
 Aplicación Streamlit: Análisis y Predicción de Presupuesto Público
-Análisis de Presupuesto y Gasto de Organismos Públicos Argentinos (2015-2025)
+Análisis de Presupuesto y Gasto de Organismos Públicos
 """
 
 import streamlit as st
@@ -330,13 +330,12 @@ if pagina == "📊 Dashboard Principal":
             f"{num_planes}",
             help="Cantidad de planes en el filtro"
         )
-    
-    # ========================================================================
-    # VISUALIZACIÓN 1: PRESUPUESTO TOTAL POR PERÍODO
-    # ========================================================================
-    
-    st.markdown("---")
-    st.markdown("### 📊 1. Presupuesto Total por Período")
+# ========================================================================
+# VISUALIZACIÓN 1: PRESUPUESTO TOTAL POR PERÍODO
+# ========================================================================
+
+st.markdown("---")
+with st.expander("📊 1. Presupuesto Total por Período"):
     
     # Preparar datos
     presup_periodo = df_filtrado.groupby('Periodo').agg({
@@ -345,24 +344,26 @@ if pagina == "📊 Dashboard Principal":
         'Disminucion': 'sum',
         'TotalGastado': 'sum'
     }).reset_index()
-    
+
     presup_periodo['Presup_M'] = presup_periodo['TotalPresupuesto'] / 1e6
     presup_periodo['Aumento_M'] = presup_periodo['Aumento'] / 1e6
     presup_periodo['Dismin_M'] = presup_periodo['Disminucion'] / 1e6
     presup_periodo['Gasto_M'] = presup_periodo['TotalGastado'] / 1e6
     presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
-    
-    # Gráfico de barras apiladas
+
+    # Gráfico SIN la línea azul
     base = alt.Chart(presup_periodo).transform_fold(
         ['Aumento_M', 'Dismin_M'],
         as_=['Tipo', 'Monto']
     ).encode(
-        x=alt.X('Periodo_str:N', title='Período', sort=None),
+        x=alt.X('Periodo_str:N', title='Período'),
         y=alt.Y('Monto:Q', title='Monto (Millones $)'),
         color=alt.Color('Tipo:N', 
-                       scale=alt.Scale(domain=['Aumento_M', 'Dismin_M'], 
-                                      range=['#2ecc71', '#e74c3c']),
-                       legend=alt.Legend(title='Tipo de Ajuste')),
+                        scale=alt.Scale(
+                            domain=['Aumento_M', 'Dismin_M'],
+                            range=['#2ecc71', '#e74c3c']
+                        ),
+                        legend=alt.Legend(title='Tipo de Ajuste')),
         tooltip=[
             alt.Tooltip('Periodo:O', title='Período'),
             alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
@@ -371,68 +372,48 @@ if pagina == "📊 Dashboard Principal":
             alt.Tooltip('Gasto_M:Q', title='Gasto (M$)', format=',.1f')
         ]
     )
-    
-    bars = base.mark_bar(opacity=0.7)
-    
-    # Línea del presupuesto total
-    line = alt.Chart(presup_periodo).mark_line(
-        point=True, 
-        strokeWidth=3, 
-        color='#3498db'
-    ).encode(
-        x=alt.X('Periodo_str:N', sort=None),
-        y=alt.Y('Presup_M:Q'),
-        tooltip=[
-            alt.Tooltip('Periodo:O', title='Período'),
-            alt.Tooltip('Presup_M:Q', title='Presupuesto Total (M$)', format=',.1f')
-        ]
-    )
-    
-    chart1 = (bars + line).properties(
+
+    chart1 = base.mark_bar(opacity=0.8).properties(
         width=700,
         height=400,
-        title="Evolución del Presupuesto y Ajustes por Período"
+        title="Presupuesto Total por Período (Sin Línea)"
     )
-    
+
     st.altair_chart(chart1, use_container_width=True)
-    
-    # Tabla resumen
-    with st.expander("📋 Ver tabla de datos"):
-        st.dataframe(
-            presup_periodo[['Periodo', 'Presup_M', 'Aumento_M', 'Dismin_M', 'Gasto_M']].rename(columns={
-                'Presup_M': 'Presupuesto (M$)',
-                'Aumento_M': 'Aumentos (M$)',
-                'Dismin_M': 'Disminuciones (M$)',
-                'Gasto_M': 'Gasto (M$)'
-            }),
-            use_container_width=True,
-            hide_index=True
-        )
-    
-    # ========================================================================
-    # VISUALIZACIÓN 2: PRESUPUESTO POR ORGANISMO
-    # ========================================================================
-    
-    st.markdown("---")
-    st.markdown("### 🏛️ 2. Presupuesto por Organismo (Top 10)")
-    
-    # Preparar datos
+
+    # tabla
+    st.dataframe(
+        presup_periodo[['Periodo', 'Presup_M', 'Aumento_M', 'Dismin_M', 'Gasto_M']].rename(columns={
+            'Presup_M': 'Presupuesto (M$)',
+            'Aumento_M': 'Aumentos (M$)',
+            'Dismin_M': 'Disminuciones (M$)',
+            'Gasto_M': 'Gasto (M$)'
+        }),
+        use_container_width=True,
+        hide_index=True
+    )
+
+# ========================================================================
+# VISUALIZACIÓN 2: PRESUPUESTO POR ORGANISMO  (CORREGIDA)
+# ========================================================================
+
+st.markdown("---")
+with st.expander("🏛️ 2. Presupuesto por Organismo"):
+
     presup_org = df_filtrado.groupby('Organismo').agg({
         'TotalPresupuesto': 'sum',
-        'TotalGastado': 'sum',
-        'Aumento': 'sum',
-        'Disminucion': 'sum'
+        'TotalGastado': 'sum'
     }).reset_index()
-    
-    presup_org = presup_org.sort_values('TotalPresupuesto', ascending=False).head(10)
+
     presup_org['Presup_M'] = presup_org['TotalPresupuesto'] / 1e6
     presup_org['Gasto_M'] = presup_org['TotalGastado'] / 1e6
     presup_org['Org_str'] = presup_org['Organismo'].astype(str)
-    presup_org['RatioEjec'] = (presup_org['TotalGastado'] / presup_org['TotalPresupuesto'] * 100)
-    
-    # Gráfico horizontal
-    chart2 = alt.Chart(presup_org).mark_bar(color='steelblue', opacity=0.8).encode(
-        x=alt.X('Presup_M:Q', title='Presupuesto (Millones $)'),
+    presup_org['RatioEjec'] = presup_org['TotalGastado'] / presup_org['TotalPresupuesto'] * 100
+
+    presup_org = presup_org.sort_values('TotalPresupuesto', ascending=False)
+
+    chart2 = alt.Chart(presup_org).mark_bar(color='steelblue', opacity=0.85).encode(
+        x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
         y=alt.Y('Org_str:N', title='Organismo', sort='-x'),
         tooltip=[
             alt.Tooltip('Organismo:N'),
@@ -442,116 +423,92 @@ if pagina == "📊 Dashboard Principal":
         ]
     ).properties(
         width=700,
-        height=400,
-        title="Top 10 Organismos por Presupuesto Total"
+        height=450,
+        title="Presupuesto por Organismo"
     )
-    
+
     st.altair_chart(chart2, use_container_width=True)
-    
-    with st.expander("📋 Ver detalles por organismo"):
-        st.dataframe(
-            presup_org[['Org_str', 'Presup_M', 'Gasto_M', 'RatioEjec']].rename(columns={
-                'Org_str': 'Organismo',
-                'Presup_M': 'Presupuesto (M$)',
-                'Gasto_M': 'Gasto (M$)',
-                'RatioEjec': 'Ejecución %'
-            }),
-            use_container_width=True,
-            hide_index=True
-        )
-    
-    # ========================================================================
-    # VISUALIZACIÓN 3: DESGLOSE POR PLAN DE CUENTA
-    # ========================================================================
-    
-    st.markdown("---")
-    st.markdown("### 📋 3. Desglose por Plan de Cuenta")
-    
-    # Opción de desglose
+
+    st.dataframe(
+        presup_org[['Organismo', 'Presup_M', 'Gasto_M', 'RatioEjec']].rename(columns={
+            'Presup_M': 'Presupuesto (M$)',
+            'Gasto_M': 'Gasto (M$)',
+            'RatioEjec': 'Ejecución (%)'
+        }),
+        use_container_width=True,
+        hide_index=True
+    )
+
+# ========================================================================
+# VISUALIZACIÓN 3: DESGLOSE POR PLAN DE CUENTA (CORREGIDA)
+# ========================================================================
+
+st.markdown("---")
+with st.expander("📋 3. Desglose por Plan de Cuenta"):
+
     col_d1, col_d2 = st.columns([1, 3])
-    
+
     with col_d1:
         desglose_tipo = st.radio(
             "Tipo de desglose:",
-            ["Top 10 Planes", "Todos los Planes", "Por Organismo Seleccionado"],
-            help="Elige cómo visualizar el desglose"
+            ["Top 10 Planes", "Todos los Planes", "Por Organismo Seleccionado"]
         )
-    
+
     if desglose_tipo == "Por Organismo Seleccionado":
         with col_d2:
             org_detalle = st.selectbox(
                 "Selecciona un organismo:",
-                options=sorted(df_filtrado['Organismo'].unique()),
-                help="Ver desglose de planes para este organismo"
+                options=sorted(df_filtrado['Organismo'].unique())
             )
             df_desglose = df_filtrado[df_filtrado['Organismo'] == org_detalle]
     else:
         df_desglose = df_filtrado.copy()
-    
-    # Preparar datos de desglose
+
     presup_plan = df_desglose.groupby('PlanDeCuenta').agg({
         'TotalPresupuesto': 'sum',
-        'TotalGastado': 'sum',
-        'Aumento': 'sum',
-        'Disminucion': 'sum'
+        'TotalGastado': 'sum'
     }).reset_index()
-    
+
     presup_plan['Presup_M'] = presup_plan['TotalPresupuesto'] / 1e6
-    presup_plan['%'] = (presup_plan['TotalPresupuesto'] / presup_plan['TotalPresupuesto'].sum() * 100)
+    presup_plan['%'] = presup_plan['TotalPresupuesto'] / presup_plan['TotalPresupuesto'].sum() * 100
+
     presup_plan = presup_plan.sort_values('TotalPresupuesto', ascending=False)
-    
+
     if desglose_tipo == "Top 10 Planes":
         presup_plan = presup_plan.head(10)
-    
+
     presup_plan['Plan_str'] = presup_plan['PlanDeCuenta'].astype(str)
-    presup_plan['%_Acum'] = presup_plan['%'].cumsum()
-    
-    # Gráfico de barras con línea Pareto
-    bars = alt.Chart(presup_plan).mark_bar(color='#e67e22', opacity=0.8).encode(
-        x=alt.X('Presup_M:Q', title='Presupuesto (Millones $)'),
+
+    # Gráfico SIN la línea pareto roja
+    chart3 = alt.Chart(presup_plan).mark_bar(
+        color='#e67e22',
+        opacity=0.85
+    ).encode(
+        x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
         y=alt.Y('Plan_str:N', title='Plan de Cuenta', sort='-x'),
         tooltip=[
             alt.Tooltip('PlanDeCuenta:N', title='Plan'),
             alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
-            alt.Tooltip('%:Q', title='% del Total', format='.1f'),
-            alt.Tooltip('%_Acum:Q', title='% Acumulado', format='.1f')
+            alt.Tooltip('%:Q', title='% del Total', format='.1f')
         ]
-    )
-    
-    line_pareto = alt.Chart(presup_plan).mark_line(
-        point=True, 
-        strokeWidth=3, 
-        color='#c0392b'
-    ).encode(
-        x='Presup_M:Q',
-        y=alt.Y('%_Acum:Q', title='% Acumulado', axis=alt.Axis(orient='right')),
-        tooltip=[
-            alt.Tooltip('%_Acum:Q', title='% Acumulado', format='.1f')
-        ]
-    )
-    
-    chart3 = alt.layer(bars, line_pareto).resolve_scale(
-        y='independent'
     ).properties(
         width=700,
         height=500,
         title=f"Presupuesto por Plan de Cuenta - {desglose_tipo}"
     )
-    
+
     st.altair_chart(chart3, use_container_width=True)
-    
-    with st.expander("📋 Ver tabla completa de planes"):
-        st.dataframe(
-            presup_plan[['Plan_str', 'Presup_M', '%', '%_Acum']].rename(columns={
-                'Plan_str': 'Plan de Cuenta',
-                'Presup_M': 'Presupuesto (M$)',
-                '%': '% del Total',
-                '%_Acum': '% Acumulado'
-            }),
-            use_container_width=True,
-            hide_index=True
-        )
-    
+
+    st.dataframe(
+        presup_plan[['Plan_str', 'Presup_M', '%']].rename(columns={
+            'Plan_str': 'Plan de Cuenta',
+            'Presup_M': 'Presupuesto (M$)',
+            '%': '% del Total'
+        }),
+        use_container_width=True,
+        hide_index=True
+    )
+
     # ========================================================================
     # VISUALIZACIÓN 4: AUMENTOS VS DISMINUCIONES
     # ========================================================================
