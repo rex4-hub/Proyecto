@@ -1,6 +1,6 @@
 """
 Aplicación Streamlit: Análisis y Predicción de Presupuesto Público
-Análisis de Presupuesto y Gasto de Organismos Públicos
+Análisis de Presupuesto y Gasto de Organismos Públicos Argentinos (2015-2025)
 """
 
 import streamlit as st
@@ -161,9 +161,9 @@ st.sidebar.markdown("---")
 pagina = st.sidebar.radio(
     "Selecciona una página:",
     [
-        "📊 Dashboard Principal",
+        "🏠 Inicio",
         "📈 Exploración de Datos",
-        "📉 Análisis Exploratorio",
+        "📊 Análisis Exploratorio",
         "🤖 Modelo Predictivo",
         "🎯 Hacer Predicciones",
         "📚 Documentación"
@@ -182,464 +182,62 @@ st.sidebar.info(f"""
 """)
 
 # ============================================================================
-# PÁGINA: DASHBOARD PRINCIPAL
+# PÁGINA: INICIO
 # ============================================================================
 
-if pagina == "📊 Dashboard Principal":
-    st.markdown('<h1 class="main-header">📊 Dashboard Principal - Análisis Presupuestario</h1>', 
+if pagina == "🏠 Inicio":
+    st.markdown('<h1 class="main-header">📊 Análisis y Predicción de Presupuesto Público</h1>', 
                 unsafe_allow_html=True)
     
     st.markdown("""
-    ### 🎯 Panel de Control Ejecutivo
-    Analiza el presupuesto por organismo, período y plan de cuenta con filtros interactivos.
+    ### Bienvenido a la aplicación de análisis presupuestario
+    
+    Esta aplicación permite **explorar, analizar y predecir** el presupuesto de organismos públicos argentinos
+    usando técnicas de ciencia de datos y machine learning.
     """)
     
-    # ========================================================================
-    # FILTROS PRINCIPALES
-    # ========================================================================
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("📊 Registros", f"{len(df_raw):,}")
+    with col2:
+        st.metric("🏛️ Organismos", df_raw['Organismo'].nunique())
+    with col3:
+        st.metric("📅 Años", f"{df_raw['Periodo'].max() - df_raw['Periodo'].min() + 1}")
+    with col4:
+        st.metric("🎯 R² Modelo", f"{metrics['test']['r2']:.3f}")
     
     st.markdown("---")
-    st.markdown("### 🔍 Filtros de Análisis")
     
-    col_f1, col_f2, col_f3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
-    with col_f1:
-        # Filtro de Organismo (multiselect)
-        organismos_disponibles = sorted(df_raw['Organismo'].unique())
-        organismos_sel = st.multiselect(
-            "🏛️ Organismos",
-            options=organismos_disponibles,
-            default=organismos_disponibles[:5] if len(organismos_disponibles) >= 5 else organismos_disponibles,
-            help="Selecciona uno o más organismos"
-        )
+    with col1:
+        st.markdown("### 🎯 Funcionalidades")
+        st.markdown("""
+        ✅ **Exploración de Datos**: Visualiza estadísticas y distribuciones  
+        ✅ **Análisis Exploratorio**: Gráficos interactivos con Altair  
+        ✅ **Modelo Predictivo**: Random Forest entrenado (R²=0.95)  
+        ✅ **Predicciones Interactivas**: Predice presupuestos nuevos  
+        ✅ **Documentación**: Metodología y hallazgos clave  
+        """)
     
-    with col_f2:
-        # Filtro de Período (multiselect)
-        periodos_disponibles = sorted(df_raw['Periodo'].unique(), reverse=True)
-        periodos_sel = st.multiselect(
-            "📅 Períodos",
-            options=periodos_disponibles,
-            default=periodos_disponibles[:3] if len(periodos_disponibles) >= 3 else periodos_disponibles,
-            help="Selecciona uno o más períodos"
-        )
-    
-    with col_f3:
-        # Filtro de Plan de Cuenta (multiselect)
-        planes_disponibles = sorted(df_raw['PlanDeCuenta'].unique())
-        planes_sel = st.multiselect(
-            "📋 Planes de Cuenta",
-            options=planes_disponibles,
-            default=None,
-            help="Opcional: filtra por planes específicos"
-        )
-    
-    # Aplicar filtros
-    df_filtrado = df_raw.copy()
-    
-    if organismos_sel:
-        df_filtrado = df_filtrado[df_filtrado['Organismo'].isin(organismos_sel)]
-    
-    if periodos_sel:
-        df_filtrado = df_filtrado[df_filtrado['Periodo'].isin(periodos_sel)]
-    
-    if planes_sel:
-        df_filtrado = df_filtrado[df_filtrado['PlanDeCuenta'].isin(planes_sel)]
-    
-    # Validar que hay datos
-    if len(df_filtrado) == 0:
-        st.warning("⚠️ No hay datos para los filtros seleccionados. Ajusta los filtros.")
-        st.stop()
-    
-    st.markdown(f"**📊 Registros filtrados:** {len(df_filtrado):,} de {len(df_raw):,}")
-    
-    # ========================================================================
-    # MÉTRICAS PRINCIPALES
-    # ========================================================================
+    with col2:
+        st.markdown("### 📈 Hallazgos Principales")
+        st.markdown("""
+        🔹 **Crecimiento exponencial** desde 2023  
+        🔹 **Plan 34 (Salarios)** concentra ~60% del presupuesto  
+        🔹 **R² = 0.95**: Excelente capacidad predictiva  
+        🔹 **Variables lag**: Los mejores predictores (48%)  
+        🔹 **Sin overfitting**: Gap < 0.05  
+        """)
     
     st.markdown("---")
-    st.markdown("### 📈 Indicadores Clave")
-    
-    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-    
-    with col_m1:
-        total_presupuesto = df_filtrado['TotalPresupuesto'].sum()
-        st.metric(
-            "💰 Presupuesto Total",
-            f"${total_presupuesto/1e6:.1f}M",
-            help="Suma total del presupuesto"
-        )
-    
-    with col_m2:
-        total_gasto = df_filtrado['TotalGastado'].sum()
-        st.metric(
-            "💸 Gasto Total",
-            f"${total_gasto/1e6:.1f}M",
-            help="Suma total del gasto ejecutado"
-        )
-    
-    with col_m3:
-        total_aumentos = df_filtrado['Aumento'].sum()
-        st.metric(
-            "📈 Aumentos Totales",
-            f"${total_aumentos/1e6:.1f}M",
-            help="Suma de todos los aumentos"
-        )
-    
-    with col_m4:
-        total_disminuciones = df_filtrado['Disminucion'].sum()
-        st.metric(
-            "📉 Disminuciones Totales",
-            f"${total_disminuciones/1e6:.1f}M",
-            delta=f"-{(total_disminuciones/total_presupuesto*100):.1f}%",
-            delta_color="inverse",
-            help="Suma de todas las disminuciones"
-        )
-    
-    # Segunda fila de métricas
-    col_m5, col_m6, col_m7, col_m8 = st.columns(4)
-    
-    with col_m5:
-        ratio_ejecucion = (total_gasto / total_presupuesto * 100) if total_presupuesto > 0 else 0
-        st.metric(
-            "🎯 Ejecución Presupuestaria",
-            f"{ratio_ejecucion:.1f}%",
-            help="Porcentaje ejecutado del presupuesto"
-        )
-    
-    with col_m6:
-        ajuste_neto = total_aumentos - total_disminuciones
-        st.metric(
-            "⚖️ Ajuste Neto",
-            f"${ajuste_neto/1e6:.1f}M",
-            delta=f"{(ajuste_neto/total_presupuesto*100):+.1f}%",
-            help="Aumentos - Disminuciones"
-        )
-    
-    with col_m7:
-        num_organismos = df_filtrado['Organismo'].nunique()
-        st.metric(
-            "🏛️ Organismos",
-            f"{num_organismos}",
-            help="Cantidad de organismos en el filtro"
-        )
-    
-    with col_m8:
-        num_planes = df_filtrado['PlanDeCuenta'].nunique()
-        st.metric(
-            "📋 Planes de Cuenta",
-            f"{num_planes}",
-            help="Cantidad de planes en el filtro"
-        )
-# ========================================================================
-# VISUALIZACIÓN 1: PRESUPUESTO TOTAL POR PERÍODO
-# ========================================================================
-
-st.markdown("---")
-with st.expander("📊 1. Presupuesto Total por Período"):
-    
-    # Preparar datos
-    presup_periodo = df_filtrado.groupby('Periodo').agg({
-        'TotalPresupuesto': 'sum',
-        'Aumento': 'sum',
-        'Disminucion': 'sum',
-        'TotalGastado': 'sum'
-    }).reset_index()
-
-    presup_periodo['Presup_M'] = presup_periodo['TotalPresupuesto'] / 1e6
-    presup_periodo['Aumento_M'] = presup_periodo['Aumento'] / 1e6
-    presup_periodo['Dismin_M'] = presup_periodo['Disminucion'] / 1e6
-    presup_periodo['Gasto_M'] = presup_periodo['TotalGastado'] / 1e6
-    presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
-
-    # Gráfico SIN la línea azul
-    base = alt.Chart(presup_periodo).transform_fold(
-        ['Aumento_M', 'Dismin_M'],
-        as_=['Tipo', 'Monto']
-    ).encode(
-        x=alt.X('Periodo_str:N', title='Período'),
-        y=alt.Y('Monto:Q', title='Monto (Millones $)'),
-        color=alt.Color('Tipo:N', 
-                        scale=alt.Scale(
-                            domain=['Aumento_M', 'Dismin_M'],
-                            range=['#2ecc71', '#e74c3c']
-                        ),
-                        legend=alt.Legend(title='Tipo de Ajuste')),
-        tooltip=[
-            alt.Tooltip('Periodo:O', title='Período'),
-            alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
-            alt.Tooltip('Aumento_M:Q', title='Aumentos (M$)', format=',.1f'),
-            alt.Tooltip('Dismin_M:Q', title='Disminuciones (M$)', format=',.1f'),
-            alt.Tooltip('Gasto_M:Q', title='Gasto (M$)', format=',.1f')
-        ]
-    )
-
-    chart1 = base.mark_bar(opacity=0.8).properties(
-        width=700,
-        height=400,
-        title="Presupuesto Total por Período (Sin Línea)"
-    )
-
-    st.altair_chart(chart1, use_container_width=True)
-
-    # tabla
-    st.dataframe(
-        presup_periodo[['Periodo', 'Presup_M', 'Aumento_M', 'Dismin_M', 'Gasto_M']].rename(columns={
-            'Presup_M': 'Presupuesto (M$)',
-            'Aumento_M': 'Aumentos (M$)',
-            'Dismin_M': 'Disminuciones (M$)',
-            'Gasto_M': 'Gasto (M$)'
-        }),
-        use_container_width=True,
-        hide_index=True
-    )
-
-# ========================================================================
-# VISUALIZACIÓN 2: PRESUPUESTO POR ORGANISMO  (CORREGIDA)
-# ========================================================================
-
-st.markdown("---")
-with st.expander("🏛️ 2. Presupuesto por Organismo"):
-
-    presup_org = df_filtrado.groupby('Organismo').agg({
-        'TotalPresupuesto': 'sum',
-        'TotalGastado': 'sum'
-    }).reset_index()
-
-    presup_org['Presup_M'] = presup_org['TotalPresupuesto'] / 1e6
-    presup_org['Gasto_M'] = presup_org['TotalGastado'] / 1e6
-    presup_org['Org_str'] = presup_org['Organismo'].astype(str)
-    presup_org['RatioEjec'] = presup_org['TotalGastado'] / presup_org['TotalPresupuesto'] * 100
-
-    presup_org = presup_org.sort_values('TotalPresupuesto', ascending=False)
-
-    chart2 = alt.Chart(presup_org).mark_bar(color='steelblue', opacity=0.85).encode(
-        x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
-        y=alt.Y('Org_str:N', title='Organismo', sort='-x'),
-        tooltip=[
-            alt.Tooltip('Organismo:N'),
-            alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
-            alt.Tooltip('Gasto_M:Q', title='Gasto (M$)', format=',.1f'),
-            alt.Tooltip('RatioEjec:Q', title='Ejecución %', format='.1f')
-        ]
-    ).properties(
-        width=700,
-        height=450,
-        title="Presupuesto por Organismo"
-    )
-
-    st.altair_chart(chart2, use_container_width=True)
-
-    st.dataframe(
-        presup_org[['Organismo', 'Presup_M', 'Gasto_M', 'RatioEjec']].rename(columns={
-            'Presup_M': 'Presupuesto (M$)',
-            'Gasto_M': 'Gasto (M$)',
-            'RatioEjec': 'Ejecución (%)'
-        }),
-        use_container_width=True,
-        hide_index=True
-    )
-
-# ========================================================================
-# VISUALIZACIÓN 3: DESGLOSE POR PLAN DE CUENTA (CORREGIDA)
-# ========================================================================
-
-st.markdown("---")
-with st.expander("📋 3. Desglose por Plan de Cuenta"):
-
-    col_d1, col_d2 = st.columns([1, 3])
-
-    with col_d1:
-        desglose_tipo = st.radio(
-            "Tipo de desglose:",
-            ["Top 10 Planes", "Todos los Planes", "Por Organismo Seleccionado"]
-        )
-
-    if desglose_tipo == "Por Organismo Seleccionado":
-        with col_d2:
-            org_detalle = st.selectbox(
-                "Selecciona un organismo:",
-                options=sorted(df_filtrado['Organismo'].unique())
-            )
-            df_desglose = df_filtrado[df_filtrado['Organismo'] == org_detalle]
-    else:
-        df_desglose = df_filtrado.copy()
-
-    presup_plan = df_desglose.groupby('PlanDeCuenta').agg({
-        'TotalPresupuesto': 'sum',
-        'TotalGastado': 'sum'
-    }).reset_index()
-
-    presup_plan['Presup_M'] = presup_plan['TotalPresupuesto'] / 1e6
-    presup_plan['%'] = presup_plan['TotalPresupuesto'] / presup_plan['TotalPresupuesto'].sum() * 100
-
-    presup_plan = presup_plan.sort_values('TotalPresupuesto', ascending=False)
-
-    if desglose_tipo == "Top 10 Planes":
-        presup_plan = presup_plan.head(10)
-
-    presup_plan['Plan_str'] = presup_plan['PlanDeCuenta'].astype(str)
-
-    # Gráfico SIN la línea pareto roja
-    chart3 = alt.Chart(presup_plan).mark_bar(
-        color='#e67e22',
-        opacity=0.85
-    ).encode(
-        x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
-        y=alt.Y('Plan_str:N', title='Plan de Cuenta', sort='-x'),
-        tooltip=[
-            alt.Tooltip('PlanDeCuenta:N', title='Plan'),
-            alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
-            alt.Tooltip('%:Q', title='% del Total', format='.1f')
-        ]
-    ).properties(
-        width=700,
-        height=500,
-        title=f"Presupuesto por Plan de Cuenta - {desglose_tipo}"
-    )
-
-    st.altair_chart(chart3, use_container_width=True)
-
-    st.dataframe(
-        presup_plan[['Plan_str', 'Presup_M', '%']].rename(columns={
-            'Plan_str': 'Plan de Cuenta',
-            'Presup_M': 'Presupuesto (M$)',
-            '%': '% del Total'
-        }),
-        use_container_width=True,
-        hide_index=True
-    )
-
-    # ========================================================================
-    # VISUALIZACIÓN 4: AUMENTOS VS DISMINUCIONES
-    # ========================================================================
-    
-    st.markdown("---")
-    st.markdown("### ⚖️ 4. Análisis de Aumentos y Disminuciones")
-    
-    col_a1, col_a2 = st.columns(2)
-    
-    with col_a1:
-        # Por período
-        ajustes_periodo = df_filtrado.groupby('Periodo').agg({
-            'Aumento': 'sum',
-            'Disminucion': 'sum'
-        }).reset_index()
-        
-        ajustes_periodo['Aumento_M'] = ajustes_periodo['Aumento'] / 1e6
-        ajustes_periodo['Dismin_M'] = ajustes_periodo['Disminucion'] / 1e6
-        ajustes_periodo['Neto_M'] = ajustes_periodo['Aumento_M'] - ajustes_periodo['Dismin_M']
-        ajustes_periodo['Periodo_str'] = ajustes_periodo['Periodo'].astype(str)
-        
-        # Gráfico de barras agrupadas
-        ajustes_long = ajustes_periodo.melt(
-            id_vars='Periodo_str',
-            value_vars=['Aumento_M', 'Dismin_M'],
-            var_name='Tipo',
-            value_name='Monto'
-        )
-        
-        chart4a = alt.Chart(ajustes_long).mark_bar().encode(
-            x=alt.X('Periodo_str:N', title='Período', sort=None),
-            y=alt.Y('Monto:Q', title='Monto (Millones $)'),
-            color=alt.Color('Tipo:N',
-                           scale=alt.Scale(domain=['Aumento_M', 'Dismin_M'],
-                                          range=['#27ae60', '#e74c3c']),
-                           legend=alt.Legend(title='Tipo')),
-            xOffset='Tipo:N',
-            tooltip=[
-                alt.Tooltip('Periodo_str:N', title='Período'),
-                alt.Tooltip('Tipo:N', title='Tipo'),
-                alt.Tooltip('Monto:Q', title='Monto (M$)', format=',.1f')
-            ]
-        ).properties(
-            width=350,
-            height=350,
-            title="Aumentos y Disminuciones por Período"
-        )
-        
-        st.altair_chart(chart4a, use_container_width=True)
-    
-    with col_a2:
-        # Comparación presupuesto original vs ajustado
-        comp_data = pd.DataFrame({
-            'Concepto': ['Presupuesto Original', 'Aumentos', 'Disminuciones', 'Presupuesto Final'],
-            'Monto': [
-                df_filtrado['TotalPresupuesto'].sum() / 1e6,
-                df_filtrado['Aumento'].sum() / 1e6,
-                -df_filtrado['Disminucion'].sum() / 1e6,
-                (df_filtrado['TotalPresupuesto'].sum() + df_filtrado['Aumento'].sum() - df_filtrado['Disminucion'].sum()) / 1e6
-            ],
-            'Color': ['blue', 'green', 'red', 'purple']
-        })
-        
-        chart4b = alt.Chart(comp_data).mark_bar().encode(
-            x=alt.X('Concepto:N', title='', sort=None),
-            y=alt.Y('Monto:Q', title='Monto (Millones $)'),
-            color=alt.Color('Color:N', scale=None, legend=None),
-            tooltip=[
-                alt.Tooltip('Concepto:N'),
-                alt.Tooltip('Monto:Q', title='Monto (M$)', format=',.1f')
-            ]
-        ).properties(
-            width=350,
-            height=350,
-            title="Flujo Presupuestario: Original → Final"
-        )
-        
-        st.altair_chart(chart4b, use_container_width=True)
-    
-    # Resumen de ajustes
-    st.info(f"""
-    💡 **Resumen de Ajustes:**
-    - **Aumentos totales:** ${total_aumentos/1e6:.1f}M ({(total_aumentos/total_presupuesto*100):.1f}% del presupuesto)
-    - **Disminuciones totales:** ${total_disminuciones/1e6:.1f}M ({(total_disminuciones/total_presupuesto*100):.1f}% del presupuesto)
-    - **Ajuste neto:** ${ajuste_neto/1e6:+.1f}M ({(ajuste_neto/total_presupuesto*100):+.1f}%)
-    - **Presupuesto final:** ${(total_presupuesto + ajuste_neto)/1e6:.1f}M
-    """)
-    
-    # ========================================================================
-    # DESCARGA DE DATOS
-    # ========================================================================
-    
-    st.markdown("---")
-    st.markdown("### 📥 Exportar Datos Filtrados")
-    
-    col_d1, col_d2, col_d3 = st.columns(3)
-    
-    with col_d1:
-        csv_filtrado = df_filtrado.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Descargar datos completos (CSV)",
-            data=csv_filtrado,
-            file_name=f"datos_filtrados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv"
-        )
-    
-    with col_d2:
-        csv_resumen = presup_periodo.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Descargar resumen por período (CSV)",
-            data=csv_resumen,
-            file_name=f"resumen_periodo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv"
-        )
-    
-    with col_d3:
-        csv_planes = presup_plan.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Descargar desglose por plan (CSV)",
-            data=csv_planes,
-            file_name=f"desglose_planes_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv"
-        )
-
-# ============================================================================
-# PÁGINA: INICIO
-# ============================================================================
+    st.info("👈 **Usa el menú lateral** para navegar entre las diferentes secciones")
 
 # ============================================================================
 # PÁGINA: EXPLORACIÓN DE DATOS
 # ============================================================================
+
 elif pagina == "📈 Exploración de Datos":
     st.markdown('<h1 class="main-header">📈 Exploración de Datos</h1>', unsafe_allow_html=True)
     
@@ -732,7 +330,7 @@ elif pagina == "📈 Exploración de Datos":
 # PÁGINA: ANÁLISIS EXPLORATORIO
 # ============================================================================
 
-elif pagina == "📉 Análisis Exploratorio":
+elif pagina == "📊 Análisis Exploratorio":
     st.markdown('<h1 class="main-header">📊 Análisis Exploratorio</h1>', unsafe_allow_html=True)
     
     tab1, tab2 = st.tabs(["📈 Evolución Temporal", "🎨 Concentración"])
