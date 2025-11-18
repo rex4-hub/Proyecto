@@ -755,12 +755,12 @@ elif pagina == "🤖 Modelo Predictivo":
             (df_pred.loc[mask, 'Real'] - df_pred.loc[mask, 'Pred']) / df_pred.loc[mask, 'Real'] * 100
         )
         
-        # Scatter
+        # Scatter con escala lineal
         scatter = alt.Chart(df_pred).mark_circle(size=60, opacity=0.6).encode(
-            x=alt.X('Real_M:Q', title='Real (M$)', scale=alt.Scale(type='log')),
-            y=alt.Y('Pred_M:Q', title='Predicho (M$)', scale=alt.Scale(type='log')),
+            x=alt.X('Real_M:Q', title='Real (M$)', scale=alt.Scale(type='linear')),
+            y=alt.Y('Pred_M:Q', title='Predicho (M$)', scale=alt.Scale(type='linear')),
             color=alt.Color('Error_%:Q', title='Error %', 
-                           scale=alt.Scale(scheme='redyellowgreen', domain=[50, 0], reverse=True)),
+                           scale=alt.Scale(scheme='redyellowgreen', domain=[0, 50])),
             tooltip=[
                 alt.Tooltip('Real_M:Q', title='Real (M$)', format=',.2f'),
                 alt.Tooltip('Pred_M:Q', title='Pred (M$)', format=',.2f'),
@@ -1148,4 +1148,3 @@ st.markdown("""
     <p>© 2025 - Proyecto de Visualización de Datos</p>
 </div>
 """, unsafe_allow_html=True)
-
