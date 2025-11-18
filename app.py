@@ -381,27 +381,26 @@ if pagina == "📊 Dashboard Principal":
         )
 
         st.altair_chart(chartB, use_container_width=True)
- # ========================================================================
-    # VISUALIZACIÓN 4: AUMENTOS VS DISMINUCIONES
-    # ========================================================================
-    
-    st.markdown("---")
-    st.markdown("### ⚖️ 4. Análisis de Aumentos y Disminuciones")
+# ========================================================================
+# 4️⃣ VISUALIZACIÓN: AUMENTOS VS DISMINUCIONES (DESPLEGABLE)
+# ========================================================================
+
+with st.expander("⚖️ 4. Análisis de Aumentos y Disminuciones"):
     
     col_a1, col_a2 = st.columns(2)
-    
+
     with col_a1:
         # Por período
         ajustes_periodo = df_filtrado.groupby('Periodo').agg({
             'Aumento': 'sum',
             'Disminucion': 'sum'
         }).reset_index()
-        
+
         ajustes_periodo['Aumento_M'] = ajustes_periodo['Aumento'] / 1e6
         ajustes_periodo['Dismin_M'] = ajustes_periodo['Disminucion'] / 1e6
         ajustes_periodo['Neto_M'] = ajustes_periodo['Aumento_M'] - ajustes_periodo['Dismin_M']
         ajustes_periodo['Periodo_str'] = ajustes_periodo['Periodo'].astype(str)
-        
+
         # Gráfico de barras agrupadas
         ajustes_long = ajustes_periodo.melt(
             id_vars='Periodo_str',
@@ -409,14 +408,14 @@ if pagina == "📊 Dashboard Principal":
             var_name='Tipo',
             value_name='Monto'
         )
-        
+
         chart4a = alt.Chart(ajustes_long).mark_bar().encode(
             x=alt.X('Periodo_str:N', title='Período', sort=None),
             y=alt.Y('Monto:Q', title='Monto (Millones $)'),
             color=alt.Color('Tipo:N',
-                           scale=alt.Scale(domain=['Aumento_M', 'Dismin_M'],
-                                          range=['#27ae60', '#e74c3c']),
-                           legend=alt.Legend(title='Tipo')),
+                            scale=alt.Scale(domain=['Aumento_M', 'Dismin_M'],
+                                            range=['#27ae60', '#e74c3c']),
+                            legend=alt.Legend(title='Tipo')),
             xOffset='Tipo:N',
             tooltip=[
                 alt.Tooltip('Periodo_str:N', title='Período'),
@@ -424,13 +423,12 @@ if pagina == "📊 Dashboard Principal":
                 alt.Tooltip('Monto:Q', title='Monto (M$)', format=',.1f')
             ]
         ).properties(
-            width=350,
             height=350,
             title="Aumentos y Disminuciones por Período"
         )
-        
+
         st.altair_chart(chart4a, use_container_width=True)
-    
+
     with col_a2:
         # Comparación presupuesto original vs ajustado
         comp_data = pd.DataFrame({
@@ -443,7 +441,7 @@ if pagina == "📊 Dashboard Principal":
             ],
             'Color': ['blue', 'green', 'red', 'purple']
         })
-        
+
         chart4b = alt.Chart(comp_data).mark_bar().encode(
             x=alt.X('Concepto:N', title='', sort=None),
             y=alt.Y('Monto:Q', title='Monto (Millones $)'),
@@ -453,12 +451,11 @@ if pagina == "📊 Dashboard Principal":
                 alt.Tooltip('Monto:Q', title='Monto (M$)', format=',.1f')
             ]
         ).properties(
-            width=350,
             height=350,
             title="Flujo Presupuestario: Original → Final"
         )
-        
-        st.altair_chart(chart4b, use_container_width=True)        
+
+        st.altair_chart(chart4b, use_container_width=True)
 # ============================================================================
 # 📈 PÁGINA: EXPLORACIÓN DE DATOS
 # ============================================================================
