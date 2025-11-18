@@ -385,7 +385,7 @@ if pagina == "📊 Dashboard Principal":
     # =========================================================
 
 
-    with st.expander("⚖️ 4. Análisis de Aumentos y Disminuciones"):
+  with st.expander("⚖️ 4. Análisis de Aumentos y Disminuciones"):
     
     
     col_a1, col_a2 = st.columns(2)
