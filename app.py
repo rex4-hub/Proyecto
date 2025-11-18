@@ -760,7 +760,7 @@ elif pagina == "🤖 Modelo Predictivo":
             x=alt.X('Real_M:Q', title='Real (M$)', scale=alt.Scale(type='linear')),
             y=alt.Y('Pred_M:Q', title='Predicho (M$)', scale=alt.Scale(type='linear')),
             color=alt.Color('Error_%:Q', title='Error %', 
-                           scale=alt.Scale(scheme='redyellowgreen', domain=[0, 50])),
+                           scale=alt.Scale(scheme='redyellowgreen', domain=[50, 0])),
             tooltip=[
                 alt.Tooltip('Real_M:Q', title='Real (M$)', format=',.2f'),
                 alt.Tooltip('Pred_M:Q', title='Pred (M$)', format=',.2f'),
