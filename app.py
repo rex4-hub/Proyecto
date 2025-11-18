@@ -186,108 +186,108 @@ st.sidebar.info(f"""
 **R² Test:** {metrics['test']['r2']:.3f}
 """)
 
-# ============================================================================
-# PÁGINA: DASHBOARD PRINCIPAL
-# ============================================================================
-
-if pagina == "📊 Dashboard Principal":
-    presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
-
-
-base = alt.Chart(presup_periodo).transform_fold(
-['Aumento_M', 'Dismin_M'],
-as_=['Tipo', 'Monto']
-).encode(
-x=alt.X('Periodo_str:N', title='Período'),
-y=alt.Y('Monto:Q', title='Monto (M$)'),
-color=alt.Color('Tipo:N', scale=alt.Scale(domain=['Aumento_M','Dismin_M'], range=['#2ecc71','#e74c3c'])),
-tooltip=[
-alt.Tooltip('Periodo:O', title='Período'),
-alt.Tooltip('Aumento_M:Q', title='Aumentos (M$)', format=',.1f'),
-alt.Tooltip('Dismin_M:Q', title='Disminuciones (M$)', format=',.1f')
-]
-)
-
-
-chart1 = base.mark_bar(opacity=0.7).properties(height=400)
-st.altair_chart(chart1, use_container_width=True)
-
-
-# =========================================================
-# 2️⃣ GRÁFICO 2 (MODIFICADO) – SIN "TOP 10"
-# =========================================================
-
-
-with st.expander("🏛️ 2. Presupuesto por Organismo"):
-    presup_org = df_filtrado.groupby('Organismo').agg({
-    'TotalPresupuesto': 'sum',
-    'TotalGastado': 'sum'
-}).reset_index()
-
-
-presup_org['Presup_M'] = presup_org['TotalPresupuesto'] / 1e6
-presup_org['Org_str'] = presup_org['Organismo'].astype(str)
-
-
-chart2 = alt.Chart(presup_org).mark_bar(color='steelblue', opacity=0.8).encode(
-    x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
-    y=alt.Y('Org_str:N', title='Organismo', sort='-x'),
+    # ============================================================================
+    # PÁGINA: DASHBOARD PRINCIPAL
+    # ============================================================================
+    
+    if pagina == "📊 Dashboard Principal":
+        presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
+    
+    
+    base = alt.Chart(presup_periodo).transform_fold(
+    ['Aumento_M', 'Dismin_M'],
+    as_=['Tipo', 'Monto']
+    ).encode(
+    x=alt.X('Periodo_str:N', title='Período'),
+    y=alt.Y('Monto:Q', title='Monto (M$)'),
+    color=alt.Color('Tipo:N', scale=alt.Scale(domain=['Aumento_M','Dismin_M'], range=['#2ecc71','#e74c3c'])),
     tooltip=[
-    alt.Tooltip('Organismo:N'),
-    alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f')
+    alt.Tooltip('Periodo:O', title='Período'),
+    alt.Tooltip('Aumento_M:Q', title='Aumentos (M$)', format=',.1f'),
+    alt.Tooltip('Dismin_M:Q', title='Disminuciones (M$)', format=',.1f')
     ]
-).properties(height=400)
-
-
-st.altair_chart(chart2, use_container_width=True)
-
-
-# =========================================================
-# 3️⃣ GRÁFICO 3 – DIVIDIDO EN DOS (PRESUPUESTO y ACUMULADO)
-# =========================================================
-
-
-with st.expander("📋 3. Desglose por Plan de Cuenta"):
-    df_desglose = df_filtrado.copy()
-
-
-presup_plan = df_desglose.groupby('PlanDeCuenta').agg({
-    'TotalPresupuesto': 'sum'
-}).reset_index()
-
-
-presup_plan['Pres_M'] = presup_plan['TotalPresupuesto'] / 1e6
-presup_plan['%'] = (presup_plan['TotalPresupuesto'] / presup_plan['TotalPresupuesto'].sum()) * 100
-presup_plan['%_Acum'] = presup_plan['%'].cumsum()
-presup_plan['Plan_str'] = presup_plan['PlanDeCuenta'].astype(str)
-
-
-# --- GRÁFICO A: Presupuesto ---
-st.markdown("### 🔹 Presupuesto por Plan de Cuenta")
-
-
-chartA = alt.Chart(presup_plan).mark_bar(color='#e67e22', opacity=0.85).encode(
-x=alt.X('Plan_str:N', title='Plan de Cuenta', sort='-y'),
-y=alt.Y('Pres_M:Q', title='Presupuesto (M$)'),
-tooltip=[alt.Tooltip('Pres_M:Q', title='Presupuesto (M$)', format=',.1f')]
-).properties(height=350)
-
-
-st.altair_chart(chartA, use_container_width=True)
-
-
-# --- GRÁFICO B: Acumulado ---
-st.markdown("### 🔹 Porcentaje Acumulado")
-
-
-chartB = alt.Chart(presup_plan).mark_line(point=True, color='#c0392b', strokeWidth=3).encode(
-x=alt.X('Plan_str:N', title='Plan de Cuenta', sort='-y'),
-y=alt.Y('%_Acum:Q', title='% Acumulado'),
-tooltip=[alt.Tooltip('%_Acum:Q', title='% Acumulado', format='.1f')]
-).properties(height=350)
-
-
-st.altair_chart(chartB, use_container_width=True)
+    )
+    
+    
+    chart1 = base.mark_bar(opacity=0.7).properties(height=400)
+    st.altair_chart(chart1, use_container_width=True)
+    
+    
+    # =========================================================
+    # 2️⃣ GRÁFICO 2 (MODIFICADO) – SIN "TOP 10"
+    # =========================================================
+    
+    
+    with st.expander("🏛️ 2. Presupuesto por Organismo"):
+        presup_org = df_filtrado.groupby('Organismo').agg({
+        'TotalPresupuesto': 'sum',
+        'TotalGastado': 'sum'
+    }).reset_index()
+    
+    
+    presup_org['Presup_M'] = presup_org['TotalPresupuesto'] / 1e6
+    presup_org['Org_str'] = presup_org['Organismo'].astype(str)
+    
+    
+    chart2 = alt.Chart(presup_org).mark_bar(color='steelblue', opacity=0.8).encode(
+        x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
+        y=alt.Y('Org_str:N', title='Organismo', sort='-x'),
+        tooltip=[
+        alt.Tooltip('Organismo:N'),
+        alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f')
+        ]
+    ).properties(height=400)
+    
+    
+    st.altair_chart(chart2, use_container_width=True)
+    
+    
+    # =========================================================
+    # 3️⃣ GRÁFICO 3 – DIVIDIDO EN DOS (PRESUPUESTO y ACUMULADO)
+    # =========================================================
+    
+    
+    with st.expander("📋 3. Desglose por Plan de Cuenta"):
+        df_desglose = df_filtrado.copy()
+    
+    
+    presup_plan = df_desglose.groupby('PlanDeCuenta').agg({
+        'TotalPresupuesto': 'sum'
+    }).reset_index()
+    
+    
+    presup_plan['Pres_M'] = presup_plan['TotalPresupuesto'] / 1e6
+    presup_plan['%'] = (presup_plan['TotalPresupuesto'] / presup_plan['TotalPresupuesto'].sum()) * 100
+    presup_plan['%_Acum'] = presup_plan['%'].cumsum()
+    presup_plan['Plan_str'] = presup_plan['PlanDeCuenta'].astype(str)
+    
+    
+    # --- GRÁFICO A: Presupuesto ---
+    st.markdown("### 🔹 Presupuesto por Plan de Cuenta")
+    
+    
+    chartA = alt.Chart(presup_plan).mark_bar(color='#e67e22', opacity=0.85).encode(
+    x=alt.X('Plan_str:N', title='Plan de Cuenta', sort='-y'),
+    y=alt.Y('Pres_M:Q', title='Presupuesto (M$)'),
+    tooltip=[alt.Tooltip('Pres_M:Q', title='Presupuesto (M$)', format=',.1f')]
+    ).properties(height=350)
+    
+    
+    st.altair_chart(chartA, use_container_width=True)
+    
+    
+    # --- GRÁFICO B: Acumulado ---
+    st.markdown("### 🔹 Porcentaje Acumulado")
+    
+    
+    chartB = alt.Chart(presup_plan).mark_line(point=True, color='#c0392b', strokeWidth=3).encode(
+    x=alt.X('Plan_str:N', title='Plan de Cuenta', sort='-y'),
+    y=alt.Y('%_Acum:Q', title='% Acumulado'),
+    tooltip=[alt.Tooltip('%_Acum:Q', title='% Acumulado', format='.1f')]
+    ).properties(height=350)
+    
+    
+    st.altair_chart(chartB, use_container_width=True)
     
     # ========================================================================
     # VISUALIZACIÓN 4: AUMENTOS VS DISMINUCIONES
