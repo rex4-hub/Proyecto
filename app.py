@@ -816,119 +816,159 @@ elif pagina == "🎯 Hacer Predicciones":
     st.markdown('<h1 class="main-header">🎯 Hacer Predicciones Interactivas</h1>', unsafe_allow_html=True)
     
     st.markdown("""
-    ### 📝 Ingresa los datos para predecir el Presupuesto 2026
+    ### 📝 Predice el Presupuesto 2025 o 2026
     
-    Completa los campos a continuación para obtener una predicción del presupuesto usando el modelo Random Forest.
+    Selecciona el organismo, plan de cuenta y período. Los datos históricos se calcularán automáticamente 
+    basándose en los valores reales del dataset.
     """)
     
-    col1, col2 = st.columns(2)
+    # Filtros principales
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("#### 🏛️ Información del Organismo")
-        
         organismo = st.selectbox(
-            "Organismo",
-            options=sorted(df_modelo['Organismo'].unique()),
+            "🏛️ Organismo",
+            options=sorted(df_raw['Organismo'].unique()),
             help="Selecciona el organismo"
-        )
-        
-        plan_cuenta = st.selectbox(
-            "Plan de Cuenta",
-            options=sorted(df_modelo['PlanDeCuenta'].unique()),
-            help="Selecciona el plan de cuenta"
-        )
-        
-        periodo = st.number_input(
-            "Período",
-            min_value=2026,
-            max_value=2030,
-            value=2026,
-            help="Año para el que se predice"
         )
     
     with col2:
-        st.markdown("#### 💰 Datos Históricos")
-        
-        presupuesto_lag1 = st.number_input(
-            "Presupuesto Año Anterior ($)",
-            min_value=0.0,
-            value=1000000.0,
-            step=10000.0,
-            help="Presupuesto del año anterior"
+        plan_cuenta = st.selectbox(
+            "📋 Plan de Cuenta",
+            options=sorted(df_raw['PlanDeCuenta'].unique()),
+            help="Selecciona el plan de cuenta"
         )
-        
-        presupuesto_lag2 = st.number_input(
-            "Presupuesto 2 Años Atrás ($)",
-            min_value=0.0,
-            value=900000.0,
-            step=10000.0,
-            help="Presupuesto de hace 2 años"
-        )
-        
-        presup_promedio = st.number_input(
-            "Promedio 3 Años ($)",
-            min_value=0.0,
-            value=950000.0,
-            step=10000.0,
-            help="Promedio de los últimos 3 años"
-        )
-    
-    col3, col4 = st.columns(2)
     
     with col3:
-        st.markdown("#### 📊 Ajustes y Ejecución")
-        
-        aumento = st.number_input(
-            "Aumento ($)",
-            min_value=0.0,
-            value=0.0,
-            step=1000.0
+        periodo = st.selectbox(
+            "📅 Período a Predecir",
+            options=[2025, 2026],
+            help="Año para el que se predice"
         )
-        
-        disminucion = st.number_input(
-            "Disminución ($)",
-            min_value=0.0,
-            value=0.0,
-            step=1000.0
-        )
-        
-        gasto_total = st.number_input(
-            "Gasto Total ($)",
-            min_value=0.0,
-            value=850000.0,
-            step=10000.0
-        )
-    
-    with col4:
-        st.markdown("#### 👥 Recursos Humanos")
-        
-        cantidad_empleados = st.number_input(
-            "Cantidad de Empleados",
-            min_value=0,
-            value=10,
-            step=1
-        )
-        
-        cantidad_cargos = st.number_input(
-            "Cantidad de Cargos",
-            min_value=0,
-            value=10,
-            step=1
-        )
-        
-        crecimiento_anterior = st.slider(
-            "Crecimiento Anterior (%)",
-            min_value=-100.0,
-            max_value=100.0,
-            value=5.0,
-            step=0.1
-        ) / 100
     
     st.markdown("---")
     
-    if st.button("🎯 Predecir Presupuesto", type="primary", use_container_width=True):
+    # Botón de predicción
+    if st.button("🎯 Calcular Predicción", type="primary", use_container_width=True):
         with st.spinner("Calculando predicción..."):
             try:
+                # Filtrar datos históricos para el organismo y plan seleccionados
+                df_historico = df_raw[
+                    (df_raw['Organismo'] == organismo) & 
+                    (df_raw['PlanDeCuenta'] == plan_cuenta)
+                ].sort_values('Periodo')
+                
+                if len(df_historico) == 0:
+                    st.error("❌ No hay datos históricos para esta combinación de Organismo y Plan de Cuenta.")
+                    st.stop()
+                
+                # Obtener datos del año anterior y 2 años atrás
+                if periodo == 2025:
+                    # Para 2025, necesitamos datos de 2024 y 2023
+                    df_2024 = df_historico[df_historico['Periodo'] == 2024]
+                    df_2023 = df_historico[df_historico['Periodo'] == 2023]
+                    df_2022 = df_historico[df_historico['Periodo'] == 2022]
+                    
+                    if len(df_2024) == 0:
+                        st.error("❌ No hay datos de 2024 para calcular la predicción de 2025.")
+                        st.stop()
+                    
+                    # Datos del año anterior (2024)
+                    presupuesto_lag1 = df_2024['TotalPresupuesto'].iloc[0]
+                    aumento = df_2024['Aumento'].iloc[0]
+                    disminucion = df_2024['Disminucion'].iloc[0]
+                    gasto_total = df_2024['TotalGastado'].iloc[0]
+                    cantidad_empleados = df_2024['CantidadEmpleados'].iloc[0]
+                    cantidad_cargos = df_2024['CantidadCargos'].iloc[0]
+                    
+                    # Datos de 2 años atrás (2023)
+                    presupuesto_lag2 = df_2023['TotalPresupuesto'].iloc[0] if len(df_2023) > 0 else presupuesto_lag1
+                    
+                    # Promedio de 3 años (2022, 2023, 2024)
+                    presup_promedio = df_historico[
+                        df_historico['Periodo'].isin([2022, 2023, 2024])
+                    ]['TotalPresupuesto'].mean()
+                    
+                    # Crecimiento anterior (2023 a 2024)
+                    if len(df_2023) > 0 and df_2023['TotalPresupuesto'].iloc[0] > 0:
+                        crecimiento_anterior = (presupuesto_lag1 - df_2023['TotalPresupuesto'].iloc[0]) / df_2023['TotalPresupuesto'].iloc[0]
+                    else:
+                        crecimiento_anterior = 0.0
+                    
+                elif periodo == 2026:
+                    # Para 2026, primero necesitamos predecir 2025
+                    # Verificamos que tengamos datos de 2024
+                    df_2024 = df_historico[df_historico['Periodo'] == 2024]
+                    df_2023 = df_historico[df_historico['Periodo'] == 2023]
+                    df_2022 = df_historico[df_historico['Periodo'] == 2022]
+                    
+                    if len(df_2024) == 0:
+                        st.error("❌ No hay datos de 2024 para calcular la predicción de 2026.")
+                        st.stop()
+                    
+                    # === PASO 1: Predecir 2025 ===
+                    st.info("📊 Calculando predicción intermedia para 2025...")
+                    
+                    # Datos para predecir 2025
+                    presup_2024 = df_2024['TotalPresupuesto'].iloc[0]
+                    presup_2023 = df_2023['TotalPresupuesto'].iloc[0] if len(df_2023) > 0 else presup_2024
+                    presup_prom_2025 = df_historico[
+                        df_historico['Periodo'].isin([2022, 2023, 2024])
+                    ]['TotalPresupuesto'].mean()
+                    
+                    crec_2024 = (presup_2024 - presup_2023) / presup_2023 if (len(df_2023) > 0 and presup_2023 > 0) else 0.0
+                    
+                    # Features para 2025
+                    ajuste_neto_2024 = df_2024['Aumento'].iloc[0] - df_2024['Disminucion'].iloc[0]
+                    ratio_ajuste_2024 = df_2024['Aumento'].iloc[0] / (df_2024['Aumento'].iloc[0] + df_2024['Disminucion'].iloc[0]) if (df_2024['Aumento'].iloc[0] + df_2024['Disminucion'].iloc[0]) > 0 else 0.5
+                    gasto_por_emp_2024 = df_2024['TotalGastado'].iloc[0] / df_2024['CantidadEmpleados'].iloc[0] if df_2024['CantidadEmpleados'].iloc[0] > 0 else 0
+                    presup_final_2024 = presup_2024 + ajuste_neto_2024
+                    ratio_ejec_2024 = df_2024['TotalGastado'].iloc[0] / presup_final_2024 if presup_final_2024 > 0 else 0
+                    
+                    input_2025 = pd.DataFrame({
+                        'Organismo': [organismo],
+                        'Periodo': [2025],
+                        'PlanDeCuenta': [plan_cuenta],
+                        'Aumento': [df_2024['Aumento'].iloc[0]],
+                        'Disminucion': [df_2024['Disminucion'].iloc[0]],
+                        'TotalGastado': [df_2024['TotalGastado'].iloc[0]],
+                        'CantidadEmpleados': [df_2024['CantidadEmpleados'].iloc[0]],
+                        'CantidadCargos': [df_2024['CantidadCargos'].iloc[0]],
+                        'Presupuesto_Lag1': [presup_2024],
+                        'Presupuesto_Lag2': [presup_2023],
+                        'PresupuestoPromedio3Anios': [presup_prom_2025],
+                        'CrecimientoAnterior': [crec_2024],
+                        'AjusteNeto': [ajuste_neto_2024],
+                        'RatioAjuste': [ratio_ajuste_2024],
+                        'GastoPorEmpleado': [gasto_por_emp_2024],
+                        'RatioEjecucion': [ratio_ejec_2024],
+                        'TieneEmpleados': [1 if df_2024['CantidadEmpleados'].iloc[0] > 0 else 0],
+                        'TieneGasto': [1 if df_2024['TotalGastado'].iloc[0] > 0 else 0],
+                        'IndicadorAmpliacion': [1 if df_2024['Aumento'].iloc[0] > df_2024['Disminucion'].iloc[0] else 0]
+                    })
+                    
+                    input_2025 = input_2025[X_train.columns]
+                    prediccion_2025 = modelo.predict(input_2025)[0]
+                    
+                    st.success(f"✅ Predicción 2025: ${prediccion_2025:,.0f}")
+                    
+                    # === PASO 2: Usar predicción de 2025 para predecir 2026 ===
+                    st.info("📊 Calculando predicción final para 2026...")
+                    
+                    presupuesto_lag1 = prediccion_2025  # Usar predicción de 2025
+                    presupuesto_lag2 = presup_2024  # Dato real de 2024
+                    presup_promedio = (prediccion_2025 + presup_2024 + presup_2023) / 3  # Promedio con predicción 2025
+                    
+                    # Usar datos de 2024 como base para los demás valores
+                    aumento = df_2024['Aumento'].iloc[0]
+                    disminucion = df_2024['Disminucion'].iloc[0]
+                    gasto_total = df_2024['TotalGastado'].iloc[0]
+                    cantidad_empleados = df_2024['CantidadEmpleados'].iloc[0]
+                    cantidad_cargos = df_2024['CantidadCargos'].iloc[0]
+                    
+                    # Crecimiento anterior (2024 a 2025 predicho)
+                    crecimiento_anterior = (prediccion_2025 - presup_2024) / presup_2024 if presup_2024 > 0 else 0.0
+                
                 # Calcular features derivadas
                 ajuste_neto = aumento - disminucion
                 ratio_ajuste = aumento / (aumento + disminucion) if (aumento + disminucion) > 0 else 0.5
@@ -939,7 +979,7 @@ elif pagina == "🎯 Hacer Predicciones":
                 tiene_gasto = 1 if gasto_total > 0 else 0
                 indicador_ampliacion = 1 if aumento > disminucion else 0
                 
-                # Crear DataFrame con el mismo orden de columnas que X_train
+                # Crear DataFrame con los inputs
                 input_data = pd.DataFrame({
                     'Organismo': [organismo],
                     'Periodo': [periodo],
@@ -962,20 +1002,21 @@ elif pagina == "🎯 Hacer Predicciones":
                     'IndicadorAmpliacion': [indicador_ampliacion]
                 })
                 
-                # Reordenar columnas para que coincidan con X_train
+                # Reordenar columnas
                 input_data = input_data[X_train.columns]
                 
-                # Hacer predicción
+                # Hacer predicción final
                 prediccion = modelo.predict(input_data)[0]
                 
                 # Mostrar resultado
-                st.success("✅ Predicción completada!")
+                st.markdown("---")
+                st.success(f"✅ Predicción completada para {periodo}!")
                 
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
                     st.metric(
-                        "💰 Presupuesto Predicho",
+                        f"💰 Presupuesto Predicho {periodo}",
                         f"${prediccion:,.0f}",
                         help="Predicción del modelo Random Forest"
                     )
@@ -994,34 +1035,73 @@ elif pagina == "🎯 Hacer Predicciones":
                         delta=f"${prediccion - presupuesto_lag1:,.0f}"
                     )
                 
+                # Mostrar datos históricos utilizados
                 st.markdown("---")
-                st.markdown("### 📋 Resumen de Inputs")
+                st.markdown("### 📊 Datos Históricos Utilizados")
                 
-                resumen_df = pd.DataFrame({
-                    'Variable': [
-                        'Organismo', 'Plan de Cuenta', 'Período',
-                        'Presupuesto Año Anterior', 'Aumento', 'Disminución',
-                        'Empleados', 'Cargos', 'Gasto Total'
-                    ],
-                    'Valor': [
-                        organismo, plan_cuenta, periodo,
-                        f"${presupuesto_lag1:,.0f}", f"${aumento:,.0f}", f"${disminucion:,.0f}",
-                        cantidad_empleados, cantidad_cargos, f"${gasto_total:,.0f}"
-                    ]
-                })
+                col_h1, col_h2 = st.columns(2)
                 
-                st.dataframe(resumen_df, use_container_width=True, hide_index=True)
+                with col_h1:
+                    st.markdown("#### 💰 Presupuestos Históricos")
+                    hist_presup = pd.DataFrame({
+                        'Concepto': [
+                            f'Presupuesto {periodo-1}' + (' (predicho)' if periodo == 2026 else ''),
+                            f'Presupuesto {periodo-2}',
+                            'Promedio 3 años'
+                        ],
+                        'Valor': [
+                            f"${presupuesto_lag1:,.0f}",
+                            f"${presupuesto_lag2:,.0f}",
+                            f"${presup_promedio:,.0f}"
+                        ]
+                    })
+                    st.dataframe(hist_presup, use_container_width=True, hide_index=True)
                 
-                st.info(f"""
-                💡 **Interpretación:**  
-                El modelo predice un presupuesto de **${prediccion:,.0f}** para el {periodo}.  
-                Esto representa un cambio de **{cambio_pct:+.1f}%** respecto al año anterior.  
-                La predicción se basa en {X_train.shape[1]} variables con un R² de {metrics['test']['r2']:.3f}.
-                """)
+                with col_h2:
+                    st.markdown("#### 📊 Otros Indicadores")
+                    otros_ind = pd.DataFrame({
+                        'Concepto': [
+                            'Aumentos',
+                            'Disminuciones',
+                            'Gasto Total',
+                            'Empleados'
+                        ],
+                        'Valor': [
+                            f"${aumento:,.0f}",
+                            f"${disminucion:,.0f}",
+                            f"${gasto_total:,.0f}",
+                            f"{cantidad_empleados}"
+                        ]
+                    })
+                    st.dataframe(otros_ind, use_container_width=True, hide_index=True)
+                
+                # Interpretación
+                st.markdown("---")
+                if periodo == 2026:
+                    st.info(f"""
+                    💡 **Interpretación:**  
+                    El modelo predice un presupuesto de **${prediccion:,.0f}** para el {periodo}.  
+                    
+                    **Proceso de predicción:**
+                    1. Primero se predijo 2025: **${prediccion_2025:,.0f}**
+                    2. Luego se usó esa predicción para calcular 2026: **${prediccion:,.0f}**
+                    
+                    Esto representa un cambio de **{cambio_pct:+.1f}%** respecto a la predicción de 2025.  
+                    La predicción se basa en {X_train.shape[1]} variables con un R² de {metrics['test']['r2']:.3f}.
+                    """)
+                else:
+                    st.info(f"""
+                    💡 **Interpretación:**  
+                    El modelo predice un presupuesto de **${prediccion:,.0f}** para el {periodo}.  
+                    Esto representa un cambio de **{cambio_pct:+.1f}%** respecto al año anterior (2024).  
+                    La predicción se basa en datos históricos reales y {X_train.shape[1]} variables con un R² de {metrics['test']['r2']:.3f}.
+                    """)
                 
             except Exception as e:
                 st.error(f"❌ Error al hacer la predicción: {str(e)}")
-                st.write("Detalles del error:", e)
+                with st.expander("Ver detalles del error"):
+                    st.write("Detalles técnicos:")
+                    st.exception(e)
 
 # ============================================================================
 # PÁGINA: DOCUMENTACIÓN
