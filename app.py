@@ -248,7 +248,7 @@ st.altair_chart(chart2, use_container_width=True)
 
 
 with st.expander("📋 3. Desglose por Plan de Cuenta"):
-df_desglose = df_filtrado.copy()
+    df_desglose = df_filtrado.copy()
 
 
 presup_plan = df_desglose.groupby('PlanDeCuenta').agg({
