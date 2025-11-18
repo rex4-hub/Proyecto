@@ -352,11 +352,11 @@ if pagina == "📊 Dashboard Principal":
         presup_periodo['Gasto_M'] = presup_periodo['TotalGastado'] / 1e6
         presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
         
-        # Gráfico de barras apiladas solamente (sin línea)
-        chart1 = alt.Chart(presup_periodo).transform_fold(
+        # Gráfico de barras apiladas
+        base = alt.Chart(presup_periodo).transform_fold(
             ['Aumento_M', 'Dismin_M'],
             as_=['Tipo', 'Monto']
-        ).mark_bar(opacity=0.7).encode(
+        ).encode(
             x=alt.X('Periodo_str:N', title='Período', sort=None),
             y=alt.Y('Monto:Q', title='Monto (Millones $)'),
             color=alt.Color('Tipo:N', 
@@ -370,10 +370,28 @@ if pagina == "📊 Dashboard Principal":
                 alt.Tooltip('Dismin_M:Q', title='Disminuciones (M$)', format=',.1f'),
                 alt.Tooltip('Gasto_M:Q', title='Gasto (M$)', format=',.1f')
             ]
-        ).properties(
+        )
+        
+        bars = base.mark_bar(opacity=0.7)
+        
+        # Línea del presupuesto total
+        line = alt.Chart(presup_periodo).mark_line(
+            point=True, 
+            strokeWidth=3, 
+            color='#3498db'
+        ).encode(
+            x=alt.X('Periodo_str:N', sort=None),
+            y=alt.Y('Presup_M:Q'),
+            tooltip=[
+                alt.Tooltip('Periodo:O', title='Período'),
+                alt.Tooltip('Presup_M:Q', title='Presupuesto Total (M$)', format=',.1f')
+            ]
+        )
+        
+        chart1 = (bars + line).properties(
             width=700,
             height=400,
-            title="Aumentos y Disminuciones por Período"
+            title="Evolución del Presupuesto y Ajustes por Período"
         )
         
         st.altair_chart(chart1, use_container_width=True)
@@ -1303,7 +1321,7 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 2rem 0;'>
     <p><strong>Análisis de Presupuesto y Gasto de Organismos Públicos</strong></p>
-    <p>Desarrollado con ❤️ usando Streamlit | Dataset: 2015-2025 | Modelo: Random Forest (R²=0.95)</p>
+    <p>Desarrollado con Streamlit</p>
     <p>© 2025 - Proyecto de Visualización de Datos</p>
 </div>
 """, unsafe_allow_html=True)
