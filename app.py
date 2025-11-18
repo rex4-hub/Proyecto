@@ -219,9 +219,9 @@ st.altair_chart(chart1, use_container_width=True)
 
 
 with st.expander("🏛️ 2. Presupuesto por Organismo"):
-presup_org = df_filtrado.groupby('Organismo').agg({
-'TotalPresupuesto': 'sum',
-'TotalGastado': 'sum'
+    presup_org = df_filtrado.groupby('Organismo').agg({
+    'TotalPresupuesto': 'sum',
+    'TotalGastado': 'sum'
 }).reset_index()
 
 
@@ -230,12 +230,12 @@ presup_org['Org_str'] = presup_org['Organismo'].astype(str)
 
 
 chart2 = alt.Chart(presup_org).mark_bar(color='steelblue', opacity=0.8).encode(
-x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
-y=alt.Y('Org_str:N', title='Organismo', sort='-x'),
-tooltip=[
-alt.Tooltip('Organismo:N'),
-alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f')
-]
+    x=alt.X('Presup_M:Q', title='Presupuesto (M$)'),
+    y=alt.Y('Org_str:N', title='Organismo', sort='-x'),
+    tooltip=[
+    alt.Tooltip('Organismo:N'),
+    alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f')
+    ]
 ).properties(height=400)
 
 
@@ -252,7 +252,7 @@ df_desglose = df_filtrado.copy()
 
 
 presup_plan = df_desglose.groupby('PlanDeCuenta').agg({
-'TotalPresupuesto': 'sum'
+    'TotalPresupuesto': 'sum'
 }).reset_index()
 
 
