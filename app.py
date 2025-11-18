@@ -162,8 +162,6 @@ pagina = st.sidebar.radio(
     "Selecciona una página:",
     [
         "📊 Dashboard Principal",
-        "📈 Exploración de Datos",
-        "📉 Análisis Exploratorio",
         "🤖 Modelo Predictivo",
         "🎯 Hacer Predicciones",
         "📚 Documentación"
@@ -693,181 +691,6 @@ if pagina == "📊 Dashboard Principal":
 # ============================================================================
 
 # ============================================================================
-# PÁGINA: EXPLORACIÓN DE DATOS
-# ============================================================================
-
-elif pagina == "📈 Exploración de Datos":
-    st.markdown('<h1 class="main-header">📈 Exploración de Datos</h1>', unsafe_allow_html=True)
-    
-    tab1, tab2, tab3 = st.tabs(["📊 Vista General", "🔍 Filtros Avanzados", "📉 Estadísticas"])
-    
-    with tab1:
-        st.markdown("### 📊 Primeras Filas del Dataset")
-        st.dataframe(df_raw.head(100), use_container_width=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("### 📋 Información del Dataset")
-            st.write(f"**Forma:** {df_raw.shape[0]:,} filas × {df_raw.shape[1]} columnas")
-            st.write(f"**Período:** {df_raw['Periodo'].min()} - {df_raw['Periodo'].max()}")
-            st.write(f"**Memoria:** {df_raw.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
-        
-        with col2:
-            st.markdown("### 📊 Columnas")
-            st.write(df_raw.dtypes.to_frame('Tipo'))
-    
-    with tab2:
-        st.markdown("### 🔍 Filtrar Datos")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            organismos_sel = st.multiselect(
-                "Organismos",
-                options=sorted(df_raw['Organismo'].unique()),
-                default=None
-            )
-        
-        with col2:
-            periodos_sel = st.multiselect(
-                "Períodos",
-                options=sorted(df_raw['Periodo'].unique()),
-                default=None
-            )
-        
-        with col3:
-            planes_sel = st.multiselect(
-                "Planes de Cuenta",
-                options=sorted(df_raw['PlanDeCuenta'].unique()),
-                default=None
-            )
-        
-        # Aplicar filtros
-        df_filtrado = df_raw.copy()
-        if organismos_sel:
-            df_filtrado = df_filtrado[df_filtrado['Organismo'].isin(organismos_sel)]
-        if periodos_sel:
-            df_filtrado = df_filtrado[df_filtrado['Periodo'].isin(periodos_sel)]
-        if planes_sel:
-            df_filtrado = df_filtrado[df_filtrado['PlanDeCuenta'].isin(planes_sel)]
-        
-        st.markdown(f"### 📊 Datos Filtrados ({len(df_filtrado):,} registros)")
-        st.dataframe(df_filtrado, use_container_width=True)
-        
-        # Opción de descarga
-        csv = df_filtrado.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Descargar datos filtrados (CSV)",
-            data=csv,
-            file_name=f"datos_filtrados_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv"
-        )
-    
-    with tab3:
-        st.markdown("### 📉 Estadísticas Descriptivas")
-        
-        st.markdown("#### Variables Numéricas")
-        st.dataframe(df_raw.describe(), use_container_width=True)
-        
-        st.markdown("#### Resumen por Columna")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**Presupuesto Total:**")
-            st.write(f"- Suma: ${df_raw['TotalPresupuesto'].sum():,.0f}")
-            st.write(f"- Promedio: ${df_raw['TotalPresupuesto'].mean():,.0f}")
-            st.write(f"- Mediana: ${df_raw['TotalPresupuesto'].median():,.0f}")
-        
-        with col2:
-            st.write("**Gasto Total:**")
-            st.write(f"- Suma: ${df_raw['TotalGastado'].sum():,.0f}")
-            st.write(f"- Promedio: ${df_raw['TotalGastado'].mean():,.0f}")
-            st.write(f"- Mediana: ${df_raw['TotalGastado'].median():,.0f}")
-
-# ============================================================================
-# PÁGINA: ANÁLISIS EXPLORATORIO
-# ============================================================================
-
-elif pagina == "📉 Análisis Exploratorio":
-    st.markdown('<h1 class="main-header">📊 Análisis Exploratorio</h1>', unsafe_allow_html=True)
-    
-    tab1, tab2 = st.tabs(["📈 Evolución Temporal", "🎨 Concentración"])
-    
-    with tab1:
-        st.markdown("### 📈 Evolución del Gasto: Top 5 Organismos (2021-2024)")
-        
-        # Preparar datos
-        df_evol = df_raw[(df_raw['Periodo'] >= 2021) & (df_raw['Periodo'] <= 2024)].copy()
-        gasto_org = df_evol.groupby(['Organismo', 'Periodo'])['TotalGastado'].sum().reset_index()
-        top5 = gasto_org.groupby('Organismo')['TotalGastado'].sum().nlargest(5).index.tolist()
-        df_top5 = gasto_org[gasto_org['Organismo'].isin(top5)].copy()
-        df_top5['Gasto_M'] = df_top5['TotalGastado'] / 1e6
-        df_top5['Org_str'] = df_top5['Organismo'].astype(str)
-        
-        # Visualización
-        base = alt.Chart(df_top5).encode(
-            x=alt.X('Periodo:O', title='Período'),
-            y=alt.Y('Gasto_M:Q', title='Gasto (Millones $)', scale=alt.Scale(zero=False)),
-            color=alt.Color('Org_str:N', title='Organismo'),
-            tooltip=[
-                alt.Tooltip('Organismo:N'),
-                alt.Tooltip('Periodo:O', title='Año'),
-                alt.Tooltip('Gasto_M:Q', title='Gasto (M$)', format=',.1f')
-            ]
-        )
-        
-        lines = base.mark_line(point=True, strokeWidth=3)
-        sel = alt.selection_point(fields=['Org_str'], bind='legend')
-        
-        chart = lines.add_params(sel).encode(
-            opacity=alt.condition(sel, alt.value(1), alt.value(0.2))
-        ).properties(width=700, height=400)
-        
-        st.altair_chart(chart, use_container_width=True)
-        
-        st.info("💡 **Hallazgo:** Crecimiento exponencial desde 2023, especialmente en el Organismo 9 (+1,362%)")
-    
-    with tab2:
-        st.markdown("### 🎨 Concentración del Presupuesto: Top 15 Planes")
-        
-        # Preparar datos
-        pres_plan = df_raw.groupby('PlanDeCuenta').agg({
-            'TotalPresupuesto': 'sum'
-        }).reset_index()
-        pres_plan['Pres_M'] = pres_plan['TotalPresupuesto'] / 1e6
-        pres_plan = pres_plan.sort_values('Pres_M', ascending=False)
-        pres_plan['%'] = (pres_plan['Pres_M'] / pres_plan['Pres_M'].sum() * 100)
-        pres_plan['%_Acum'] = pres_plan['%'].cumsum()
-        top15 = pres_plan.head(15).copy()
-        top15['Plan_str'] = top15['PlanDeCuenta'].astype(str)
-        
-        # Barras
-        bars = alt.Chart(top15).mark_bar(color='steelblue', opacity=0.8).encode(
-            x=alt.X('Pres_M:Q', title='Presupuesto (Millones $)'),
-            y=alt.Y('Plan_str:N', title='Plan de Cuenta', sort='-x'),
-            tooltip=[
-                alt.Tooltip('PlanDeCuenta:N', title='Plan'),
-                alt.Tooltip('Pres_M:Q', title='Presupuesto (M$)', format=',.1f'),
-                alt.Tooltip('%:Q', title='% Total', format='.1f'),
-                alt.Tooltip('%_Acum:Q', title='% Acumulado', format='.1f')
-            ]
-        )
-        
-        # Línea
-        line = alt.Chart(top15).mark_line(color='red', strokeWidth=3, point=True).encode(
-            x='Pres_M:Q',
-            y=alt.Y('%_Acum:Q', title='% Acumulado', axis=alt.Axis(orient='right'))
-        )
-        
-        chart = alt.layer(bars, line).resolve_scale(y='independent').properties(
-            width=700, height=450
-        )
-        
-        st.altair_chart(chart, use_container_width=True)
-        
-        st.info("💡 **Hallazgo:** Plan 34 (Salarios) domina con ~60% del presupuesto. Top 5 = 85% (Pareto confirmado)")
-
-# ============================================================================
 # PÁGINA: MODELO PREDICTIVO
 # ============================================================================
 
@@ -1321,7 +1144,8 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 2rem 0;'>
     <p><strong>Análisis de Presupuesto y Gasto de Organismos Públicos</strong></p>
-    <p>Desarrollado con Streamlit</p>
+    <p>Desarrollado con ❤️ usando Streamlit | Dataset: 2015-2025 | Modelo: Random Forest (R²=0.95)</p>
     <p>© 2025 - Proyecto de Visualización de Datos</p>
 </div>
 """, unsafe_allow_html=True)
+
