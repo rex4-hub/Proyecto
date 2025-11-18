@@ -191,7 +191,7 @@ st.sidebar.info(f"""
 # ============================================================================
 
 if pagina == "📊 Dashboard Principal":
-presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
+    presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
 
 
 base = alt.Chart(presup_periodo).transform_fold(
