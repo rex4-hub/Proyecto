@@ -385,16 +385,16 @@ if pagina == "📊 Dashboard Principal":
     # =========================================================
 
 
-  with st.expander("⚖️ 4. Análisis de Aumentos y Disminuciones"):
+    with st.expander("⚖️ 4. Análisis de Aumentos y Disminuciones"):
     
     
-    col_a1, col_a2 = st.columns(2)
+        col_a1, col_a2 = st.columns(2)
     
     
     with col_a1:
-    ajustes_periodo = df_filtrado.groupby('Periodo').agg({
-    'Aumento': 'sum',
-    'Disminucion': 'sum'
+        ajustes_periodo = df_filtrado.groupby('Periodo').agg({
+        'Aumento': 'sum',
+        'Disminucion': 'sum'
     }).reset_index()
     
     
@@ -435,16 +435,16 @@ if pagina == "📊 Dashboard Principal":
     
     
     with col_a2:
-    comp_data = pd.DataFrame({
-    'Concepto': ['Presupuesto Original', 'Aumentos', 'Disminuciones', 'Presupuesto Final'],
-    'Monto': [
-    df_filtrado['TotalPresupuesto'].sum() / 1e6,
-    df_filtrado['Aumento'].sum() / 1e6,
-    -df_filtrado['Disminucion'].sum() / 1e6,
-    (df_filtrado['TotalPresupuesto'].sum() + df_filtrado['Aumento'].sum() - df_filtrado['Disminucion'].sum()) / 1e6
-    ],
-    'Color': ['blue', 'green', 'red', 'purple']
-    })
+        comp_data = pd.DataFrame({
+        'Concepto': ['Presupuesto Original', 'Aumentos', 'Disminuciones', 'Presupuesto Final'],
+        'Monto': [
+        df_filtrado['TotalPresupuesto'].sum() / 1e6,
+        df_filtrado['Aumento'].sum() / 1e6,
+        -df_filtrado['Disminucion'].sum() / 1e6,
+        (df_filtrado['TotalPresupuesto'].sum() + df_filtrado['Aumento'].sum() - df_filtrado['Disminucion'].sum()) / 1e6
+        ],
+        'Color': ['blue', 'green', 'red', 'purple']
+        })
     
     
     chart4b = alt.Chart(comp_data).mark_bar().encode(
