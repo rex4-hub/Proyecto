@@ -1,6 +1,6 @@
 """
 Aplicación Streamlit: Análisis y Predicción de Presupuesto Público
-Análisis de Presupuesto y Gasto de Organismos Públicos Argentinos (2015-2025)
+Análisis de Presupuesto y Gasto de Organismos Públicos
 """
 
 import streamlit as st
@@ -171,7 +171,7 @@ pagina = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📌 Información del Proyecto")
 st.sidebar.info(f"""
-**Dataset:** Presupuesto Público Argentino  
+**Dataset:** Presupuesto Público  
 **Período:** 2015-2025  
 **Registros:** {len(df_raw):,}  
 **Organismos:** {df_raw['Organismo'].nunique()}  
@@ -1435,7 +1435,7 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 2rem 0;'>
     <p><strong>Análisis de Presupuesto y Gasto de Organismos Públicos</strong></p>
-    <p>Desarrollado con ❤️ usando Streamlit | Dataset: 2015-2025 | Modelo: Random Forest (R²=0.95)</p>
+    <p>Desarrollado usando Streamlit | Dataset: 2015-2025</p>
     <p>© 2025 - Proyecto de Visualización de Datos</p>
 </div>
 """, unsafe_allow_html=True)
