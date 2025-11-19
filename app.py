@@ -335,74 +335,99 @@ if pagina == "📊 Dashboard Principal":
     
     st.markdown("---")
     
-    with st.expander("📊 1. Presupuesto Total por Período", expanded=False):
-        # Preparar datos
-        presup_periodo = df_filtrado.groupby('Periodo').agg({
-            'TotalPresupuesto': 'sum',
-            'Aumento': 'sum',
-            'Disminucion': 'sum',
-            'TotalGastado': 'sum'
-        }).reset_index()
+    with st.expander("📊 1. Evolución del Gasto por Organismo", expanded=False):
+        # Sub-filtro para seleccionar organismos específicos
+        organismos_disponibles_grafico = sorted(df_filtrado['Organismo'].unique())
         
-        presup_periodo['Presup_M'] = presup_periodo['TotalPresupuesto'] / 1e6
-        presup_periodo['Aumento_M'] = presup_periodo['Aumento'] / 1e6
-        presup_periodo['Dismin_M'] = presup_periodo['Disminucion'] / 1e6
-        presup_periodo['Gasto_M'] = presup_periodo['TotalGastado'] / 1e6
-        presup_periodo['Periodo_str'] = presup_periodo['Periodo'].astype(str)
+        # Por defecto mostrar top 5 organismos por gasto total
+        top_organismos = df_filtrado.groupby('Organismo')['TotalGastado'].sum().nlargest(5).index.tolist()
         
-        # Gráfico de barras apiladas
-        base = alt.Chart(presup_periodo).transform_fold(
-            ['Aumento_M', 'Dismin_M'],
-            as_=['Tipo', 'Monto']
-        ).encode(
-            x=alt.X('Periodo_str:N', title='Período', sort=None),
-            y=alt.Y('Monto:Q', title='Monto (Millones $)'),
-            color=alt.Color('Tipo:N', 
-                           scale=alt.Scale(domain=['Aumento_M', 'Dismin_M'], 
-                                          range=['#2ecc71', '#e74c3c']),
-                           legend=alt.Legend(title='Tipo de Ajuste')),
-            tooltip=[
-                alt.Tooltip('Periodo:O', title='Período'),
-                alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
-                alt.Tooltip('Aumento_M:Q', title='Aumentos (M$)', format=',.1f'),
-                alt.Tooltip('Dismin_M:Q', title='Disminuciones (M$)', format=',.1f'),
-                alt.Tooltip('Gasto_M:Q', title='Gasto (M$)', format=',.1f')
-            ]
+        organismos_sel_grafico = st.multiselect(
+            "Selecciona organismos para visualizar:",
+            options=organismos_disponibles_grafico,
+            default=top_organismos if len(top_organismos) > 0 else organismos_disponibles_grafico[:5],
+            help="Selecciona uno o más organismos para ver su evolución"
         )
         
-        bars = base.mark_bar(opacity=0.7)
-        
-        # Línea del presupuesto total
-        line = alt.Chart(presup_periodo).mark_line(
-            point=True, 
-            strokeWidth=3, 
-            color='#3498db'
-        ).encode(
-            x=alt.X('Periodo_str:N', sort=None),
-            y=alt.Y('Presup_M:Q'),
-            tooltip=[
-                alt.Tooltip('Periodo:O', title='Período'),
-                alt.Tooltip('Presup_M:Q', title='Presupuesto Total (M$)', format=',.1f')
-            ]
-        )
-        
-        chart1 = (bars + line).properties(
-            width=700,
-            height=400,
-            title="Evolución del Presupuesto y Ajustes por Período"
-        )
-        
-        st.altair_chart(chart1, use_container_width=True)
+        if not organismos_sel_grafico:
+            st.warning("⚠️ Selecciona al menos un organismo para visualizar.")
+        else:
+            # Filtrar por los organismos seleccionados
+            df_evol = df_filtrado[df_filtrado['Organismo'].isin(organismos_sel_grafico)].copy()
+            
+            # Agrupar por Organismo y Periodo
+            gasto_org_periodo = df_evol.groupby(['Organismo', 'Periodo'])['TotalGastado'].sum().reset_index()
+            gasto_org_periodo['Gasto_M'] = gasto_org_periodo['TotalGastado'] / 1e6
+            
+            # Crear gráfico de líneas
+            chart1 = alt.Chart(gasto_org_periodo).mark_line(
+                point=True, 
+                strokeWidth=3
+            ).encode(
+                x=alt.X('Periodo:O', title='Año'),
+                y=alt.Y('Gasto_M:Q', title='Gasto Total (Millones $)'),
+                color=alt.Color('Organismo:N', 
+                               legend=alt.Legend(title="Organismo", orient='right')),
+                tooltip=[
+                    alt.Tooltip('Organismo:N', title='Organismo'),
+                    alt.Tooltip('Periodo:O', title='Año'),
+                    alt.Tooltip('Gasto_M:Q', title='Gasto (M$)', format=',.1f')
+                ]
+            ).properties(
+                width=700,
+                height=400,
+                title=f"Evolución del Gasto por Organismo ({gasto_org_periodo['Periodo'].min()}-{gasto_org_periodo['Periodo'].max()})"
+            )
+            
+            st.altair_chart(chart1, use_container_width=True)
+            
+            # Mostrar estadísticas resumidas
+            col_e1, col_e2, col_e3 = st.columns(3)
+            
+            with col_e1:
+                org_mayor_gasto = gasto_org_periodo.loc[gasto_org_periodo['Gasto_M'].idxmax(), 'Organismo']
+                mayor_gasto = gasto_org_periodo['Gasto_M'].max()
+                st.metric(
+                    "🏆 Mayor Gasto Individual",
+                    f"${mayor_gasto:.1f}M",
+                    delta=org_mayor_gasto
+                )
+            
+            with col_e2:
+                # Calcular crecimiento promedio
+                crecimientos = []
+                for org in organismos_sel_grafico:
+                    df_org = gasto_org_periodo[gasto_org_periodo['Organismo'] == org].sort_values('Periodo')
+                    if len(df_org) > 1:
+                        primer_valor = df_org['Gasto_M'].iloc[0]
+                        ultimo_valor = df_org['Gasto_M'].iloc[-1]
+                        if primer_valor > 0:
+                            crec = ((ultimo_valor - primer_valor) / primer_valor) * 100
+                            crecimientos.append(crec)
+                
+                crec_promedio = np.mean(crecimientos) if crecimientos else 0
+                st.metric(
+                    "📈 Crecimiento Promedio",
+                    f"{crec_promedio:+.1f}%",
+                    help="Crecimiento promedio entre primer y último período"
+                )
+            
+            with col_e3:
+                total_gasto_periodo = gasto_org_periodo['Gasto_M'].sum()
+                st.metric(
+                    "💰 Gasto Total Acumulado",
+                    f"${total_gasto_periodo:.1f}M"
+                )
         
         # Tabla resumen
         with st.expander("📋 Ver tabla de datos"):
+            tabla_evol = gasto_org_periodo.pivot(
+                index='Periodo', 
+                columns='Organismo', 
+                values='Gasto_M'
+            ).reset_index()
             st.dataframe(
-                presup_periodo[['Periodo', 'Presup_M', 'Aumento_M', 'Dismin_M', 'Gasto_M']].rename(columns={
-                    'Presup_M': 'Presupuesto (M$)',
-                    'Aumento_M': 'Aumentos (M$)',
-                    'Dismin_M': 'Disminuciones (M$)',
-                    'Gasto_M': 'Gasto (M$)'
-                }),
+                tabla_evol,
                 use_container_width=True,
                 hide_index=True
             )
