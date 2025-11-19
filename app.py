@@ -1,6 +1,6 @@
 """
 Aplicación Streamlit: Análisis y Predicción de Presupuesto Público
-Análisis de Presupuesto y Gasto de Organismos Públicos Argentinos (2015-2025)
+Análisis de Presupuesto y Gasto de Organismos Públicos
 """
 
 import streamlit as st
@@ -171,7 +171,7 @@ pagina = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📌 Información del Proyecto")
 st.sidebar.info(f"""
-**Dataset:** Presupuesto Público Argentino  
+**Dataset:** Presupuesto Público 
 **Período:** 2015-2025  
 **Registros:** {len(df_raw):,}  
 **Organismos:** {df_raw['Organismo'].nunique()}  
@@ -1122,7 +1122,7 @@ elif pagina == "🎯 Hacer Predicciones":
 elif pagina == "📚 Documentación":
     st.markdown('<h1 class="main-header">📚 Documentación</h1>', unsafe_allow_html=True)
     
-    tab1, tab2, tab3 = st.tabs(["📖 Metodología", "🔍 Hallazgos", "💻 Tecnologías"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📖 Metodología", "🔍 Hallazgos", "💻 Tecnologías", "📘 Glosario"])
     
     with tab1:
         st.markdown("""
@@ -1227,6 +1227,214 @@ elif pagina == "📚 Documentación":
         scikit-learn>=1.3.0
         ```
         """)
+    
+    with tab4:
+        st.markdown("""
+        ### 📘 Glosario de Términos Presupuestarios
+        
+        Esta sección explica los conceptos clave utilizados en el análisis de presupuesto público.
+        Ideal para usuarios sin conocimientos previos del área.
+        
+        ---
+        
+        #### 💰 CONCEPTOS PRESUPUESTARIOS BÁSICOS
+        
+        **🏛️ Organismo**
+        > Entidad o institución del sector público que recibe y ejecuta presupuesto.
+        
+        *Ejemplo:* Ministerio de Educación, Ministerio de Salud, Dirección de Transporte.
+        
+        ---
+        
+        **📋 Plan de Cuenta**
+        > Código o categoría que clasifica en qué se gasta el dinero del presupuesto.
+        
+        *Tipos comunes:*
+        - **Plan 34**: Salarios y cargas sociales (personal)
+        - **Plan 12**: Bienes y servicios (materiales, contratos)
+        - **Plan 45**: Transferencias (subsidios, ayudas)
+        - **Plan 56**: Inversión física (infraestructura, equipamiento)
+        
+        ---
+        
+        **📅 Período**
+        > Año fiscal o ejercicio presupuestario analizado (2015-2025 en este dataset).
+        
+        ---
+        
+        #### 💵 MONTOS Y AJUSTES
+        
+        **💰 Total Presupuesto**
+        > Monto total de dinero asignado inicialmente a un organismo para un año.
+        
+        *También llamado:* Presupuesto Inicial, Crédito Inicial
+        
+        ---
+        
+        **📈 Aumento (Ampliación)**
+        > Dinero adicional que se suma al presupuesto inicial durante el año.
+        
+        *Razones comunes:* Emergencias, nuevos proyectos, inflación no prevista.
+        
+        *Ejemplo:* Si el presupuesto inicial era $1,000,000 y se aprueban aumentos por $200,000, 
+        el nuevo presupuesto es $1,200,000.
+        
+        ---
+        
+        **📉 Disminución (Reducción)**
+        > Dinero que se resta del presupuesto inicial durante el año.
+        
+        *Razones comunes:* Reasignación a otras áreas, recortes presupuestarios, ahorro forzoso.
+        
+        *Ejemplo:* Si el presupuesto inicial era $1,000,000 y hay reducciones por $150,000, 
+        el nuevo presupuesto es $850,000.
+        
+        ---
+        
+        **🎯 Presupuesto Final**
+        > Presupuesto después de aplicar todos los aumentos y disminuciones.
+        
+        *Fórmula:* `Presupuesto Final = Presupuesto Inicial + Aumentos - Disminuciones`
+        
+        ---
+        
+        **💸 Total Gastado (Ejecutado)**
+        > Dinero realmente utilizado o gastado por el organismo durante el año.
+        
+        *También llamado:* Presupuesto Ejecutado, Devengado
+        
+        ---
+        
+        **⚖️ Ajuste Neto**
+        > Diferencia entre los aumentos y las disminuciones del presupuesto.
+        
+        *Fórmula:* `Ajuste Neto = Aumentos - Disminuciones`
+        
+        - Si es **positivo**: El presupuesto creció
+        - Si es **negativo**: El presupuesto se redujo
+        
+        ---
+        
+        #### 👥 RECURSOS HUMANOS
+        
+        **👤 Cantidad de Empleados**
+        > Número total de personas que trabajan en el organismo.
+        
+        *Incluye:* Personal de planta permanente, contratados, temporarios.
+        
+        ---
+        
+        **📊 Cantidad de Cargos**
+        > Número de posiciones o puestos de trabajo existentes en el organismo.
+        
+        *Nota:* Puede ser diferente a la cantidad de empleados si hay cargos vacantes.
+        
+        ---
+        
+        #### 📊 INDICADORES Y RATIOS
+        
+        **📈 Ratio de Ejecución**
+        > Porcentaje del presupuesto final que realmente se gastó.
+        
+        *Fórmula:* `Ratio = (Total Gastado / Presupuesto Final) × 100`
+        
+        *Interpretación:*
+        - **< 100%**: Se gastó menos de lo asignado (sub-ejecución)
+        - **= 100%**: Se gastó exactamente lo asignado (ejecución perfecta)
+        - **> 100%**: Se gastó más de lo asignado (sobre-ejecución, puede indicar problemas)
+        
+        ---
+        
+        **💵 Gasto por Empleado**
+        > Promedio de cuánto dinero se gasta por cada empleado.
+        
+        *Fórmula:* `Gasto por Empleado = Total Gastado / Cantidad de Empleados`
+        
+        *Uso:* Comparar eficiencia operativa entre organismos similares.
+        
+        ---
+        
+        **🔄 Crecimiento Anterior**
+        > Variación porcentual del presupuesto respecto al año anterior.
+        
+        *Fórmula:* `Crecimiento = ((Presupuesto Año N - Presupuesto Año N-1) / Presupuesto Año N-1) × 100`
+        
+        *Ejemplo:* Si 2023 tuvo $1,000,000 y 2024 tiene $1,200,000, el crecimiento es +20%.
+        
+        ---
+        
+        #### 🤖 TÉRMINOS DEL MODELO PREDICTIVO
+        
+        **📊 Presupuesto Lag1**
+        > Presupuesto del año inmediatamente anterior (año N-1).
+        
+        *Ejemplo:* Para predecir 2025, Lag1 es el presupuesto de 2024.
+        
+        ---
+        
+        **📊 Presupuesto Lag2**
+        > Presupuesto de hace dos años (año N-2).
+        
+        *Ejemplo:* Para predecir 2025, Lag2 es el presupuesto de 2023.
+        
+        ---
+        
+        **📊 Presupuesto Promedio 3 Años**
+        > Promedio del presupuesto de los últimos 3 años.
+        
+        *Uso:* Suavizar variaciones extremas y captar tendencia general.
+        
+        ---
+        
+        **🎯 R² (Coeficiente de Determinación)**
+        > Métrica que indica qué tan bien el modelo predice los datos (0 a 1).
+        
+        *Interpretación:*
+        - **R² = 0.95**: El modelo explica el 95% de la variabilidad (excelente)
+        - **R² = 0.50**: El modelo explica el 50% de la variabilidad (regular)
+        - **R² = 0.20**: El modelo explica el 20% de la variabilidad (pobre)
+        
+        ---
+        
+        #### 💡 CONCEPTOS ADICIONALES
+        
+        **📈 Tendencia Inflacionaria**
+        > Aumento generalizado de precios que obliga a incrementar presupuestos sin expandir servicios.
+        
+        *Importante:* Un aumento de 100% en presupuesto con 100% de inflación = mismo poder adquisitivo.
+        
+        ---
+        
+        **🎯 Concentración Presupuestaria**
+        > Situación donde pocos planes de cuenta o organismos representan la mayoría del presupuesto.
+        
+        *En este dataset:* Top 5 planes = 85% del presupuesto total.
+        
+        ---
+        
+        **⚠️ Sub-ejecución**
+        > Cuando un organismo gasta menos dinero del que tenía asignado.
+        
+        *Posibles causas:* Planificación deficiente, trabas administrativas, proyectos cancelados.
+        
+        ---
+        
+        **⚠️ Sobre-ejecución**
+        > Cuando un organismo gasta más dinero del que tenía asignado.
+        
+        *Posibles causas:* Emergencias, mala estimación inicial, gastos imprevistos.
+        
+        ---
+        
+        ### 📚 ¿Necesitas más información?
+        
+        Si algún término no está claro o quieres más detalles, puedes:
+        1. Explorar los gráficos interactivos del Dashboard
+        2. Revisar la sección de Hallazgos para ver cómo se aplican estos conceptos
+        3. Consultar la Metodología para entender cómo se procesan los datos
+        
+        💡 **Tip**: Usa los filtros del Dashboard para ver ejemplos reales de estos conceptos con datos específicos.
+        """)
 
 # ============================================================================
 # FOOTER
@@ -1236,7 +1444,7 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 2rem 0;'>
     <p><strong>Análisis de Presupuesto y Gasto de Organismos Públicos</strong></p>
-    <p>Desarrollado con ❤️ usando Streamlit | Dataset: 2015-2025 | Modelo: Random Forest (R²=0.95)</p>
+    <p>Desarrollado usando Streamlit | Dataset: 2015-2025 
     <p>© 2025 - Proyecto de Visualización de Datos</p>
 </div>
 """, unsafe_allow_html=True)
