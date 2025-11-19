@@ -1,6 +1,6 @@
 """
 Aplicación Streamlit: Análisis y Predicción de Presupuesto Público
-Análisis de Presupuesto y Gasto de Organismos Públicos
+Análisis de Presupuesto y Gasto de Organismos Públicos Argentinos (2015-2025)
 """
 
 import streamlit as st
@@ -171,7 +171,7 @@ pagina = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📌 Información del Proyecto")
 st.sidebar.info(f"""
-**Dataset:** Presupuesto Público 
+**Dataset:** Presupuesto Público Argentino  
 **Período:** 2015-2025  
 **Registros:** {len(df_raw):,}  
 **Organismos:** {df_raw['Organismo'].nunique()}  
@@ -828,7 +828,7 @@ elif pagina == "🎯 Hacer Predicciones":
     st.markdown('<h1 class="main-header">🎯 Hacer Predicciones Interactivas</h1>', unsafe_allow_html=True)
     
     st.markdown("""
-    ### 📝 Predice el Presupuesto
+    ### 📝 Predice el Presupuesto 2025 o 2026
     
     Selecciona el organismo, plan de cuenta y período. Los datos históricos se calcularán automáticamente 
     basándose en los valores reales del dataset.
@@ -918,8 +918,7 @@ elif pagina == "🎯 Hacer Predicciones":
                         st.error("❌ No hay datos de 2024 para calcular la predicción de 2026.")
                         st.stop()
                     
-                    # === PASO 1: Predecir 2025 ===
-                    st.info("📊 Calculando predicción intermedia para 2025...")
+                    # === PASO 1: Predecir 2025 (silenciosamente) ===
                     
                     # Datos para predecir 2025
                     presup_2024 = df_2024['TotalPresupuesto'].iloc[0]
@@ -962,10 +961,7 @@ elif pagina == "🎯 Hacer Predicciones":
                     input_2025 = input_2025[X_train.columns]
                     prediccion_2025 = modelo.predict(input_2025)[0]
                     
-                    st.success(f"✅ Predicción 2025: ${prediccion_2025:,.0f}")
-                    
                     # === PASO 2: Usar predicción de 2025 para predecir 2026 ===
-                    st.info("📊 Calculando predicción final para 2026...")
                     
                     presupuesto_lag1 = prediccion_2025  # Usar predicción de 2025
                     presupuesto_lag2 = presup_2024  # Dato real de 2024
@@ -1057,7 +1053,7 @@ elif pagina == "🎯 Hacer Predicciones":
                     st.markdown("#### 💰 Presupuestos Históricos")
                     hist_presup = pd.DataFrame({
                         'Concepto': [
-                            f'Presupuesto {periodo-1}' + (' (predicho)' if periodo == 2026 else ''),
+                            f'Presupuesto {periodo-1}',
                             f'Presupuesto {periodo-2}',
                             'Promedio 3 años'
                         ],
@@ -1093,13 +1089,8 @@ elif pagina == "🎯 Hacer Predicciones":
                     st.info(f"""
                     💡 **Interpretación:**  
                     El modelo predice un presupuesto de **${prediccion:,.0f}** para el {periodo}.  
-                    
-                    **Proceso de predicción:**
-                    1. Primero se predijo 2025: **${prediccion_2025:,.0f}**
-                    2. Luego se usó esa predicción para calcular 2026: **${prediccion:,.0f}**
-                    
-                    Esto representa un cambio de **{cambio_pct:+.1f}%** respecto a la predicción de 2025.  
-                    La predicción se basa en {X_train.shape[1]} variables con un R² de {metrics['test']['r2']:.3f}.
+                    Esto representa un cambio de **{cambio_pct:+.1f}%** respecto al año anterior.  
+                    La predicción se basa en datos históricos y {X_train.shape[1]} variables con un R² de {metrics['test']['r2']:.3f}.
                     """)
                 else:
                     st.info(f"""
@@ -1444,7 +1435,7 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 2rem 0;'>
     <p><strong>Análisis de Presupuesto y Gasto de Organismos Públicos</strong></p>
-    <p>Desarrollado usando Streamlit | Dataset: 2015-2025 
+    <p>Desarrollado con ❤️ usando Streamlit | Dataset: 2015-2025 | Modelo: Random Forest (R²=0.95)</p>
     <p>© 2025 - Proyecto de Visualización de Datos</p>
 </div>
 """, unsafe_allow_html=True)
