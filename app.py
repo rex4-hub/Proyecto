@@ -828,7 +828,7 @@ elif pagina == "🎯 Hacer Predicciones":
     st.markdown('<h1 class="main-header">🎯 Hacer Predicciones Interactivas</h1>', unsafe_allow_html=True)
     
     st.markdown("""
-    ### 📝 Predice el Presupuesto 2025 o 2026
+    ### 📝 Predice el Presupuesto
     
     Selecciona el organismo, plan de cuenta y período. Los datos históricos se calcularán automáticamente 
     basándose en los valores reales del dataset.
