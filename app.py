@@ -529,50 +529,24 @@ if pagina == "📊 Dashboard Principal":
         presup_plan['Plan_str'] = presup_plan['PlanDeCuenta'].astype(str)
         presup_plan['%_Acum'] = presup_plan['%'].cumsum()
         
-        # Dos columnas para los dos gráficos
-        col_g1, col_g2 = st.columns(2)
+        # Gráfico de presupuesto por plan
+        st.markdown("#### 📊 Presupuesto por Plan de Cuenta")
         
-        with col_g1:
-            st.markdown("#### 📊 Presupuesto por Plan")
-            # Gráfico 1: Plan de Cuenta (eje X) vs Presupuesto (eje Y)
-            chart3a = alt.Chart(presup_plan).mark_bar(color='#e67e22', opacity=0.8).encode(
-                x=alt.X('Plan_str:N', title='Plan de Cuenta', sort='-y'),
-                y=alt.Y('Presup_M:Q', title='Presupuesto (Millones $)'),
-                tooltip=[
-                    alt.Tooltip('PlanDeCuenta:N', title='Plan'),
-                    alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
-                    alt.Tooltip('%:Q', title='% del Total', format='.1f')
-                ]
-            ).properties(
-                width=350,
-                height=400,
-                title="Presupuesto por Plan de Cuenta"
-            )
-            
-            st.altair_chart(chart3a, use_container_width=True)
+        chart3 = alt.Chart(presup_plan).mark_bar(color='#e67e22', opacity=0.8).encode(
+            x=alt.X('Plan_str:N', title='Plan de Cuenta', sort='-y'),
+            y=alt.Y('Presup_M:Q', title='Presupuesto (Millones $)'),
+            tooltip=[
+                alt.Tooltip('PlanDeCuenta:N', title='Plan'),
+                alt.Tooltip('Presup_M:Q', title='Presupuesto (M$)', format=',.1f'),
+                alt.Tooltip('%:Q', title='% del Total', format='.1f')
+            ]
+        ).properties(
+            width=700,
+            height=400,
+            title="Presupuesto por Plan de Cuenta"
+        )
         
-        with col_g2:
-            st.markdown("#### 📈 Porcentaje Acumulado")
-            # Gráfico 2: Plan de Cuenta (eje X) vs % Acumulado (eje Y)
-            chart3b = alt.Chart(presup_plan).mark_line(
-                point=True,
-                strokeWidth=3,
-                color='#c0392b'
-            ).encode(
-                x=alt.X('Plan_str:N', title='Plan de Cuenta', sort='-y'),
-                y=alt.Y('%_Acum:Q', title='% Acumulado', scale=alt.Scale(domain=[0, 100])),
-                tooltip=[
-                    alt.Tooltip('PlanDeCuenta:N', title='Plan'),
-                    alt.Tooltip('%:Q', title='% Individual', format='.1f'),
-                    alt.Tooltip('%_Acum:Q', title='% Acumulado', format='.1f')
-                ]
-            ).properties(
-                width=350,
-                height=400,
-                title="Porcentaje Acumulado (Pareto)"
-            )
-            
-            st.altair_chart(chart3b, use_container_width=True)
+        st.altair_chart(chart3, use_container_width=True)
         
         # Tabla completa
         with st.expander("📋 Ver tabla completa de planes"):
@@ -681,6 +655,19 @@ if pagina == "📊 Dashboard Principal":
     
     st.markdown("---")
     st.markdown("### 📥 Exportar Datos Filtrados")
+    
+    # Preparar datos de resumen por período para exportación
+    presup_periodo = df_filtrado.groupby('Periodo').agg({
+        'TotalPresupuesto': 'sum',
+        'Aumento': 'sum',
+        'Disminucion': 'sum',
+        'TotalGastado': 'sum'
+    }).reset_index()
+    
+    presup_periodo['Presup_M'] = presup_periodo['TotalPresupuesto'] / 1e6
+    presup_periodo['Aumento_M'] = presup_periodo['Aumento'] / 1e6
+    presup_periodo['Dismin_M'] = presup_periodo['Disminucion'] / 1e6
+    presup_periodo['Gasto_M'] = presup_periodo['TotalGastado'] / 1e6
     
     col_d1, col_d2, col_d3 = st.columns(3)
     
